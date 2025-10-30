@@ -24,3 +24,37 @@ Address, Party, Asset<T>, Map<K,V>, Option<T>, Unit
 ```
  * `Money = Asset<Decimal>`
  * `now : Time` is provided by the host; deterministic block time or logical time.
+
+### 2.3 Top level
+
+```
+Contract <Name>
+  Parties
+    <id> : Party = <Address>
+    ...
+  Definitions
+    let <name> : <Type> = <expr>
+    ...
+  Whereas
+    assert <predicate_expr>
+    ...
+  State
+    record { <field> : <Type> = <initial_expr>, ... }
+  Clauses
+    Clause <Name>(<params>) : <Effect>
+      Provided That
+        <boolean_expr>
+        ...
+      Shall
+        <effect_expr>    -- returned if all Provided That hold
+      Otherwise
+        Remedies
+          <effect_expr>  -- returned if any Provided fails
+  Term
+    until <time_expr>          -- contract expires
+  GoverningLaw "free text"
+  Signatures
+    require <party_id> signed
+    ...
+End
+```
