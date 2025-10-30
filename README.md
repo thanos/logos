@@ -9,3 +9,8 @@
   * *Signatures* (explicit acceptance).
 * Everything is *referentially transparent*: clauses compute *effect descriptions* (values) which the runtime later commits atomically on-chain.
 * State is immutable within evaluation; changes are expressed as an *Effect* value (e.g., `Transfer`, `Set`, `Escrow`) returned by a clause.
+
+## 2) Core syntax
+### 2.1 Lexical
+Case-insensitive keywords for legal flavor; identifiers are snake_case.
+Statements end with a newline or `;`. Strings in `"…"`. Comments start with `--`.
