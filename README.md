@@ -11,6 +11,16 @@
 * State is immutable within evaluation; changes are expressed as an *Effect* value (e.g., `Transfer`, `Set`, `Escrow`) returned by a clause.
 
 ## 2) Core syntax
+
 ### 2.1 Lexical
 Case-insensitive keywords for legal flavor; identifiers are snake_case.
 Statements end with a newline or `;`. Strings in `"…"`. Comments start with `--`.
+
+### 2.2 Types (closed & explicit)
+
+```
+Bool, Int, Decimal(scale=18), Time, Duration,
+Address, Party, Asset<T>, Map<K,V>, Option<T>, Unit
+```
+ * `Money = Asset<Decimal>`
+ * `now : Time` is provided by the host; deterministic block time or logical time.
