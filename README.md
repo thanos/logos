@@ -206,3 +206,69 @@ sigs       := "Signatures" nl { "require" ident "signed" nl }
 * “Provided That … Shall … Otherwise Remedies …” corresponds to conditions, performance, and fallback.
 * “Whereas” expresses standing facts.
 * “Term until …” expresses expiry.
+
+
+### 5.2 Simple options contract (call option payout)
+
+```
+Contract CashSettledCall
+  Parties
+    writer : Party = 0xWri...ter
+    holder : Party = 0xHol...der
+    oracle : Party = 0x0ra...cle
+
+  Definitions
+    let strike : Decimal = 2000.0
+    let notional : Decimal = 1.0
+    let asset : Asset<Decimal> = Asset("ETHUSD", 8)
+    let premium : Decimal = 50.0
+    let settlement : Time = starts + Duration("30d")
+
+  State
+    record {
+      premium_paid : Bool = false,
+      spot         : Option<Decimal> = None
+    }
+
+  Condition PREMIUM_PAID() : Bool = premium_paid
+
+  Clauses
+    Clause PayPremium() : Effect
+      Provided That
+        not PREMIUM_PAID()
+        now <= (starts + Duration("3d"))
+      Shall
+        All [
+          Transfer { asset: Asset("USDC", 6), from: holder, to: writer, amount: premium },
+          Set { field: "premium_paid", value: true },
+          Emit { event: "PremiumPaid", data: {} }
+        ]
+
+    Clause PostSpot(quote: Decimal) : Effect
+      Provided That
+        signer = oracle
+        now >= settlement
+      Shall
+        Set { field: "spot", value: Some(quote) }
+
+    Clause Settle() : Effect
+      Provided That
+        PREMIUM_PAID()
+        spot <> None
+        now >= settlement
+      Shall
+        let s = match spot with { Some x -> x; None -> 0.0 }
+        let payoff = max(s - strike, 0.0) * notional
+        If { cond: payoff > 0.0,
+             then_: Transfer { asset: Asset("USDC", 6), from: writer, to: holder, amount: payoff },
+             else_: Emit { event: "ExpiredOutOfMoney", data: {} } }
+
+  Term
+    until settlement + Duration("7d")
+
+  GoverningLaw "English Law"
+  Signatures
+    require writer signed
+    require holder signed
+End
+```
