@@ -128,3 +128,81 @@ sigs       := "Signatures" nl { "require" ident "signed" nl }
  5. *Emit* events for off-chain observers.
  6. *State updates* are only what `Set` returns.
  This cleanly separates what the lawyery text says from how state changes.
+
+ ## 5) Worked examples
+
+ ### 5.1 Fixed-price work escrow (classic freelance milestone)
+
+ ```
+ Contract WorkForHire_M1
+   Parties
+     client : Party = 0xC1e...nt
+     builder: Party = 0xBu1...dr
+     escrow : Party = 0xEsc...rw
+
+   Definitions
+     let price : Decimal = 10.0
+     let currency : Asset<Decimal> = Asset("USDC", 6)
+
+   Whereas
+     assert price > 0
+
+   State
+     record {
+       submitted : Bool = false,
+       accepted  : Bool = false
+     }
+
+   Condition SUBMITTED() : Bool =
+     submitted = true
+
+   Condition ACCEPTED() : Bool =
+     accepted = true
+
+   Clauses
+     Clause Deposit() : Effect
+       Provided That
+         now <= (contract_start + Duration("14d"))
+       Shall
+         Escrow { asset: currency, agent: escrow, payer: client, payee: builder,
+                  amount: price, release_if: "ACCEPTED" }
+       Otherwise
+         Remedies
+           Emit { event: "DepositSkipped", data: {"reason": "past_window"} }
+
+     Clause SubmitWork() : Effect
+       Provided That
+         not SUBMITTED()
+       Shall
+         All [
+           Set { field: "submitted", value: true },
+           Emit { event: "Submitted", data: {} }
+         ]
+
+     Clause AcceptWork() : Effect
+       Provided That
+         SUBMITTED()
+       Shall
+         All [
+           Set { field: "accepted", value: true },
+           Transfer { asset: currency, from: escrow, to: builder, amount: price },
+           Emit { event: "Accepted", data: {} }
+         ]
+       Otherwise
+         Remedies
+           Emit { event: "AcceptFailed", data: {"reason": "not_submitted"} }
+
+   Term
+     until contract_start + Duration("90d")
+
+   GoverningLaw "New York, USA"
+   Signatures
+     require client signed
+     require builder signed
+ End
+```
+
+*Reading like a lawyer:*
+* “Provided That … Shall … Otherwise Remedies …” corresponds to conditions, performance, and fallback.
+* “Whereas” expresses standing facts.
+* “Term until …” expresses expiry.
