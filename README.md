@@ -111,3 +111,11 @@ term       := "Term" nl "until" expr nl
 law        := "GoverningLaw" string nl
 sigs       := "Signatures" nl { "require" ident "signed" nl }
 ```
+
+## 3) Static semantics
+
+ * *Typing*: Hindley–Milner style with annotations required for top-level `let` and `State` fields.
+ * *Purity*: Clauses are total functions `Params × State → Effect`. No I/O; no randomness.
+ * *Preconditions*: Every expression under `Provided That` must type-check to `Bool`.
+ * *Remedies*: Optional; if omitted and preconditions fail → runtime returns `NoOp` and an error.
+ * *Termination*: `Term` guards clause invocation: `now <= term_until`.
