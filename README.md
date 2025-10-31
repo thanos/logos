@@ -92,3 +92,22 @@ Effect ::=
 ### 2.6 Conditions as named, reusable predicates
 
 ```Condition <ConditionId>(<params>) : Bool = <boolean_expr>```
+
+2.7 Grammar (EBNF - not complete)
+
+```
+contract   := "Contract" ident nl block "End"
+block      := parties defs whereas state clauses term law sigs
+parties    := "Parties" nl { ident ":" "Party" "=" address nl }
+defs       := "Definitions" nl { "let" ident ":" type "=" expr nl }
+whereas    := "Whereas" nl { "assert" expr nl }
+state      := "State" nl "record" "{" { ident ":" type "=" expr "," } "}" nl
+clauses    := "Clauses" nl { clause }
+clause     := "Clause" ident "(" params? ")" ":" "Effect" nl
+              "Provided That" nl { expr nl }
+              "Shall" nl effect_expr nl
+              [ "Otherwise" nl "Remedies" nl effect_expr nl ]
+term       := "Term" nl "until" expr nl
+law        := "GoverningLaw" string nl
+sigs       := "Signatures" nl { "require" ident "signed" nl }
+```
