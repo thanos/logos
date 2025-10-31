@@ -285,3 +285,8 @@ End
 * All `[e1..en]` well-typed iff each `ei : Effect`.
 * Set `{ field=f, value=v }` requires `Σ(f) = type(v)`.
 * `Transfer.amount : Decimal`, `asset : Asset<Decimal>`, `from/to : Party`.
+
+## 8) Host/runtime notes
+* *Gas & limits*: execution cost is proportional to expression size (no loops). Tail recursion allowed, but bounded by size limits.
+* *Time*: `now` sourced from block timestamp or verified logical time; contracts should treat it as monotone.
+* *Signatures*: `require X signed` -> deployment or post-deployment acceptance checks (e.g., EIP-712 style).
