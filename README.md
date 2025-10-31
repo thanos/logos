@@ -119,3 +119,12 @@ sigs       := "Signatures" nl { "require" ident "signed" nl }
  * *Preconditions*: Every expression under `Provided That` must type-check to `Bool`.
  * *Remedies*: Optional; if omitted and preconditions fail → runtime returns `NoOp` and an error.
  * *Termination*: `Term` guards clause invocation: `now <= term_until`.
+
+ ## 4) Operational model
+ 1. *Invoke* a clause with parameters + current state.
+ 2. *Evaluate* pure expressions (deterministic).
+ 3. If all *Provided* hold → result is `Shall` effect; else → `Remedies` effect (or NoOp).
+ 4. *Commit* effect atomically (apply all `Set` and `Transfer` in one transaction).
+ 5. *Emit* events for off-chain observers.
+ 6. *State updates* are only what `Set` returns.
+ This cleanly separates what the lawyery text says from how state changes.
