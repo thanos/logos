@@ -58,3 +58,20 @@ Contract <Name>
     ...
 End
 ```
+
+### 2.4 Expressions (pure, total)
+
+```
+<expr> ::=
+  literal
+| identifier
+| let x = <expr> in <expr>
+| if <expr> then <expr> else <expr>
+| match <expr> with { Some x -> <expr>; None -> <expr> }
+| fn(<args>) -> <expr>            -- first-class functions
+| <expr> |> <fn>                  -- pipe
+| <expr> . <field>                -- record access
+| <expr> +|-|*|/ <expr>           -- arithmetic on Int/Decimal
+| compare: =, <>, <, <=, >, >=
+| logical: and, or, not
+```
