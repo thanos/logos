@@ -278,3 +278,10 @@ End
 * *Safety for engineers*: strong types, total functions, effect values instead of side-effects, atomic commits.
 * *: each clause returns a single effect tree that can be inspected, simulated, and formally checked.
 * *Determinism*: no randomness, no uncontrolled I/O; oracle inputs are explicit parameters or signed posts.
+
+## 7) Minimal typing rules (sketch)
+* `Γ ⊢ e : Bool` for each `Provided` line.
+* Clause type: `Γ, params:τ, state:Σ ⊢ Shall : Effect`.
+* All `[e1..en]` well-typed iff each `ei : Effect`.
+* Set `{ field=f, value=v }` requires `Σ(f) = type(v)`.
+* `Transfer.amount : Decimal`, `asset : Asset<Decimal>`, `from/to : Party`.
