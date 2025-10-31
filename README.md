@@ -75,3 +75,16 @@ End
 | compare: =, <>, <, <=, >, >=
 | logical: and, or, not
 ```
+
+2.5 Effects (first-class values)
+
+```
+Effect ::=
+  NoOp
+| Transfer { asset: Money, from: Party, to: Party, amount: Decimal }
+| Escrow   { asset: Money, agent: Party, payer: Party, payee: Party, amount: Decimal, release_if: ConditionId }
+| Set      { field: String, value: Any }                -- state update
+| Emit     { event: String, data: Map<String, Any> }
+| All      [Effect]                                     -- atomic batch
+| If       { cond: Bool, then_: Effect, else_: Effect } -- effect-level branching
+```
