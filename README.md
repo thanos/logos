@@ -76,7 +76,7 @@ End
 | logical: and, or, not
 ```
 
-2.5 Effects (first-class values)
+### 2.5 Effects (first-class values)
 
 ```
 Effect ::=
@@ -88,3 +88,7 @@ Effect ::=
 | All      [Effect]                                     -- atomic batch
 | If       { cond: Bool, then_: Effect, else_: Effect } -- effect-level branching
 ```
+
+### 2.6 Conditions as named, reusable predicates
+
+```Condition <ConditionId>(<params>) : Bool = <boolean_expr>```
