@@ -272,3 +272,9 @@ Contract CashSettledCall
     require holder signed
 End
 ```
+
+## 6) Why this works well (law + code)
+* *Clarity for counsel*: “Whereas / Provided That / Shall / Remedies / Term” maps 1:1 to traditional drafting.
+* *Safety for engineers*: strong types, total functions, effect values instead of side-effects, atomic commits.
+* *: each clause returns a single effect tree that can be inspected, simulated, and formally checked.
+* *Determinism*: no randomness, no uncontrolled I/O; oracle inputs are explicit parameters or signed posts.
