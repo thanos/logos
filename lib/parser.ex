@@ -1,6 +1,6 @@
-defmodule LexLegal.Parser do
+defmodule Logos.Parser do
   @moduledoc false
-  alias LexLegal.AST.{Contract, Clause, Eff}
+  alias Logos.AST.{Contract, Clause, Eff}
 
   def parse(dsl) when is_binary(dsl) do
     lines =
@@ -356,7 +356,7 @@ defmodule LexLegal.Parser do
       String.starts_with?(text, "Set {") ->
         kv = parse_kv_map(text, "Set")
 
-        %LexLegal.AST.Eff{
+        %Logos.AST.Eff{
           op: :set,
           args: %{
             "field" => must(kv, "field"),
@@ -367,7 +367,7 @@ defmodule LexLegal.Parser do
       String.starts_with?(text, "Emit {") ->
         kv = parse_kv_map(text, "Emit")
 
-        %LexLegal.AST.Eff{
+        %Logos.AST.Eff{
           op: :emit,
           args: %{
             "event" => must(kv, "event") |> strip_quotes(),
@@ -378,7 +378,7 @@ defmodule LexLegal.Parser do
       String.starts_with?(text, "If {") ->
         kv = parse_kv_map(text, "If")
 
-        %LexLegal.AST.Eff{
+        %Logos.AST.Eff{
           op: :if,
           args: %{
             "cond" => must(kv, "cond"),
@@ -389,11 +389,11 @@ defmodule LexLegal.Parser do
 
       String.starts_with?(text, "Transfer {") ->
         kv = parse_kv_map(text, "Transfer")
-        %LexLegal.AST.Eff{op: :transfer, args: kv}
+        %Logos.AST.Eff{op: :transfer, args: kv}
 
       true ->
         # Try to treat it as a single effect inside "All [ ... ]" omission
-        %LexLegal.AST.Eff{op: :emit, args: %{"event" => "Note", "data" => %{"raw" => text}}}
+        %Logos.AST.Eff{op: :emit, args: %{"event" => "Note", "data" => %{"raw" => text}}}
     end
   end
 
