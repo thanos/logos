@@ -1,3 +1,5 @@
+# Logos
+
 ## 1) Mental model
 * A *Contract* is a module with:
   * *Parties, Definitions, Whereas* statements (facts/invariants),
