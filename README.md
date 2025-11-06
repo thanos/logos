@@ -106,3 +106,54 @@ contract WorkForHire_M1 {
 }
 
 ```
+
+For Logos to EVM compiling, you can use the `compile_to_evm` function:
+
+```
+dsl = ~S"""
+Contract WorkForHire_M1
+  Parties
+    client : Party = 0xC1e0000000000000000000000000000000000000
+    builder: Party = 0xBu100000000000000000000000000000000000000
+    escrow : Party = 0xEsc00000000000000000000000000000000000000
+
+  Definitions
+    let price : Decimal = 10
+
+  State
+    record {
+      submitted : Bool = false,
+      accepted  : Bool = false
+    }
+
+  Clauses
+    Clause SubmitWork() : Effect
+      Provided That
+        submitted == false
+      Shall
+        All [
+          Set { field: "submitted", value: true }
+        ]
+
+    Clause AcceptWork() : Effect
+      Provided That
+        submitted == true
+      Shall
+        All [
+          Set { field: "accepted", value: true }
+        ]
+      Otherwise
+        Remedies
+          All [ NoOp ]
+
+  GoverningLaw "New York, USA"
+  Signatures
+    require client signed
+    require builder signed
+End
+"""
+
+evm = LexLegal.CompilerEVM.compile_to_evm(dsl)
+IO.inspect(evm.runtime_hex, label: "runtime")
+IO.inspect(evm.creation_hex, label: "creation")
+```
