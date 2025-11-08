@@ -2,7 +2,7 @@
 This is a compiler for the Logos smart contract language written in Elixir.
 It supports both Solidity and EVM bytecode generation.
 
-[Logos Quick Introduction](https://github.com/logos-protocol/logos-compiler/blob/main/docs/quick-introduction.md)
+[Logos Quick Introduction](https://github.com/thanos/logos-compiler/blob/main/docs/quick-introduction.md)
 
 ## How To Use
 
