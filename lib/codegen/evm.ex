@@ -76,7 +76,6 @@ defmodule Logos.Codegen.EVM do
          %Clause{name: _n, params: params, provided: prov, shall: shall, remedies: rem},
          layout
        ) do
-    # Build env = %{ "amount" => {:cd, offset, :uint256}, ... }
     {decode_code, env} = build_param_decoder(params)
 
     ok_lbl = uniq(:ok)
@@ -113,7 +112,6 @@ defmodule Logos.Codegen.EVM do
       end
 
     [
-      # --- ABI param decoding first ---
       decode_code,
       {:label, ok_lbl},
       cond_block,
@@ -128,7 +126,6 @@ defmodule Logos.Codegen.EVM do
     need = 4 + 32 * n
     ok_lbl = uniq(:abiok)
 
-    # calldata size >= need ?
     size_check = [
       {:op, :CALLDATASIZE},
       {:push_u, need},
@@ -139,7 +136,6 @@ defmodule Logos.Codegen.EVM do
       {:label, ok_lbl}
     ]
 
-    # Offsets
     env =
       params
       |> Enum.with_index()
@@ -147,8 +143,6 @@ defmodule Logos.Codegen.EVM do
         {nm, {:cd, 4 + 32 * i, t}}
       end)
 
-    # We don't copy to memory; we load directly where needed.
-    # Emit a revert label shared by all clauses (local in assembled block)
     decoder = [
       size_check,
       {:label, :_revert_short},
@@ -161,7 +155,7 @@ defmodule Logos.Codegen.EVM do
     {decoder, env}
   end
 
-  # ---- Predicates -----------------------------------------------------------
+  # ---- Predicates with Time/TIMESTAMP ---------------------------------------
   defp compile_pred_conj([], _layout, _env), do: [{:push_u, 1}]
 
   defp compile_pred_conj(lines, layout, env) do
@@ -206,53 +200,63 @@ defmodule Logos.Codegen.EVM do
 
   defp do_parse_and(code_acc, rest, _layout, _env), do: {code_acc, rest}
 
+  # NEW: relational ops + now/timestamp
   defp parse_atom(["not" | t], layout, env) do
     {code, rest} = parse_atom(t, layout, env)
     {code ++ [{:op, :ISZERO}], rest}
   end
 
   defp parse_atom(tokens, layout, env) do
-    # allow either: <state_field> (==|!=) <literal|param>
     [lhs, cmp, rhs | rest] = tokens
 
-    lhs_code =
-      if Map.has_key?(layout, lhs) do
-        slot = Map.fetch!(layout, lhs)
-        [{:push_u, slot}, {:op, :SLOAD}]
-      else
-        # treat as param
-        load_param(lhs, env)
+    lhs_code = load_value(lhs, layout, env)
+    rhs_code = load_value(rhs, layout, env)
+
+    comp =
+      case cmp do
+        "==" -> [{:op, :EQ}]
+        "!=" -> [{:op, :EQ}, {:op, :ISZERO}]
+        "<" -> [{:op, :LT}]
+        ">" -> [{:op, :GT}]
+        # !(a > b)
+        "<=" -> [{:op, :GT}, {:op, :ISZERO}]
+        # !(a < b)
+        ">=" -> [{:op, :LT}, {:op, :ISZERO}]
+        other -> raise "Unsupported comparator #{other}"
       end
 
-    rhs_code =
-      case parse_rhs(rhs, env) do
-        {:imm, i} -> [{:push_u, i}]
-        {:code, code} -> code
-      end
-
-    code =
-      lhs_code ++
-        rhs_code ++
-        [{:op, :EQ}] ++
-        case cmp do
-          "==" -> []
-          "!=" -> [{:op, :ISZERO}]
-          other -> raise "Unsupported comparator #{other}"
-        end
-
-    {code, rest}
+    {lhs_code ++ rhs_code ++ comp, rest}
   rescue
     _ -> raise "Bad predicate atom near: #{Enum.join(tokens, " ")}"
   end
 
-  defp parse_rhs("true", _), do: {:imm, 1}
-  defp parse_rhs("false", _), do: {:imm, 0}
+  defp load_value(term, layout, env) do
+    t = String.downcase(term)
 
-  defp parse_rhs(int, _) do
-    case Integer.parse(int) do
-      {i, ""} -> {:imm, i}
-      # fallback
-      _ -> {:code, []}
+    cond do
+      t in ["now", "timestamp", "block.timestamp"] ->
+        [{:op, :TIMESTAMP}]
+
+      Map.has_key?(layout, term) ->
+        slot = Map.fetch!(layout, term)
+        [{:push_u, slot}, {:op, :SLOAD}]
+
+      Map.has_key?(env, term) ->
+        load_param(term, env)
+
+      t == "true" ->
+        [{:push_u, 1}]
+
+      t == "false" ->
+        [{:push_u, 0}]
+
+      match?({_, ""}, Integer.parse(term)) ->
+        {i, ""} = Integer.parse(term)
+        [{:push_u, i}]
+
+      true ->
+        # Unknown symbol -> 0 (safe default)
+        [{:push_u, 0}]
     end
   end
 
@@ -393,23 +397,13 @@ defmodule Logos.Codegen.EVM do
 
   defp push_addr_or_param(v, env) do
     case v do
-      <<"0x", _::binary>> = addr ->
-        case Base.decode16(String.upcase(String.slice(addr, 2..-1)), case: :mixed) do
-          {:ok, bin} ->
-            [{:push, bin |> :binary.decode_unsigned() |> :binary.encode_unsigned()}]
-            |> List.first()
-            |> case do
-              # we want exact bytes left-padded automatically via PUSHn
-              {:push, _} = p -> [p]
-              _ -> [{:push_u, :binary.decode_unsigned(bin)}]
-            end
-
-          _ ->
-            [{:push_u, 0}]
+      <<"0x", hex::binary>> ->
+        case Base.decode16(String.upcase(hex), case: :mixed) do
+          {:ok, bin} -> [{:push_u, :binary.decode_unsigned(bin)}]
+          _ -> [{:push_u, 0}]
         end
 
       {:raw, name} when is_binary(name) ->
-        # param (address or uint256) – just CALLDATALOAD slot
         load_param(name, env)
 
       _ ->
