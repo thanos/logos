@@ -155,12 +155,17 @@ defmodule Logos.Codegen.EVM do
     {decoder, env}
   end
 
-  # ---- Predicates with Time/TIMESTAMP ---------------------------------------
+  # ---- Predicates with Time/TIMESTAMP + arithmetic on durations -------------
   defp compile_pred_conj([], _layout, _env), do: [{:push_u, 1}]
 
   defp compile_pred_conj(lines, layout, env) do
-    tokens =
+    # Normalize duration literals to seconds before tokenization (e.g., "7d" -> "604800")
+    normalized =
       lines
+      |> Enum.map(&normalize_durations/1)
+
+    tokens =
+      normalized
       |> Enum.map(&String.trim/1)
       |> Enum.join(" and ")
       |> String.replace(~r/\s+/, " ")
@@ -200,17 +205,18 @@ defmodule Logos.Codegen.EVM do
 
   defp do_parse_and(code_acc, rest, _layout, _env), do: {code_acc, rest}
 
-  # NEW: relational ops + now/timestamp
+  # Parse one comparison atom: <expr> <cmp> <expr>, where <expr> supports +/- int seconds
   defp parse_atom(["not" | t], layout, env) do
     {code, rest} = parse_atom(t, layout, env)
     {code ++ [{:op, :ISZERO}], rest}
   end
 
   defp parse_atom(tokens, layout, env) do
-    [lhs, cmp, rhs | rest] = tokens
+    # Find first comparator
+    {lhs_toks, cmp, rhs_toks, rest} = split_on_comparator(tokens)
 
-    lhs_code = load_value(lhs, layout, env)
-    rhs_code = load_value(rhs, layout, env)
+    lhs_code = compile_value_expr(lhs_toks, layout, env)
+    rhs_code = compile_value_expr(rhs_toks, layout, env)
 
     comp =
       case cmp do
@@ -230,35 +236,94 @@ defmodule Logos.Codegen.EVM do
     _ -> raise "Bad predicate atom near: #{Enum.join(tokens, " ")}"
   end
 
-  defp load_value(term, layout, env) do
-    t = String.downcase(term)
+  # Split tokens into LHS, comparator, RHS, rest (rest begins at next 'and'/'or' or end)
+  defp split_on_comparator(tokens) do
+    cmp_idx =
+      Enum.find_index(tokens, &(&1 in ["==", "!=", "<", ">", "<=", ">="])) ||
+        raise "Comparator not found"
 
-    cond do
-      t in ["now", "timestamp", "block.timestamp"] ->
-        [{:op, :TIMESTAMP}]
+    cmp = Enum.at(tokens, cmp_idx)
+    lhs = Enum.slice(tokens, 0, cmp_idx)
 
-      Map.has_key?(layout, term) ->
-        slot = Map.fetch!(layout, term)
-        [{:push_u, slot}, {:op, :SLOAD}]
+    # RHS extends until next 'and'/'or' or end
+    rhs_tokens = Enum.drop(tokens, cmp_idx + 1)
 
-      Map.has_key?(env, term) ->
-        load_param(term, env)
+    {rhs, rest} =
+      case Enum.find_index(rhs_tokens, &(&1 in ["and", "or"])) do
+        nil -> {rhs_tokens, []}
+        j -> {Enum.slice(rhs_tokens, 0, j), Enum.drop(rhs_tokens, j)}
+      end
 
-      t == "true" ->
-        [{:push_u, 1}]
+    {lhs, cmp, rhs, rest}
+  end
 
-      t == "false" ->
-        [{:push_u, 0}]
+  # Compile <expr> where expr := term {(+|-) int}*
+  defp compile_value_expr(tokens, layout, env) do
+    tokens = Enum.reject(tokens, &(&1 == ""))
 
-      match?({_, ""}, Integer.parse(term)) ->
-        {i, ""} = Integer.parse(term)
-        [{:push_u, i}]
+    # parse first term
+    {code, rest} = parse_term(tokens, layout, env)
+    do_fold_arith(code, rest, layout, env)
+  end
 
-      true ->
-        # Unknown symbol -> 0 (safe default)
-        [{:push_u, 0}]
+  defp do_fold_arith(code_acc, [op, int | rest], layout, env) when op in ["+", "-"] do
+    # int must be integer literal (already duration-normalized)
+    amt =
+      case Integer.parse(int) do
+        {i, ""} -> i
+        _ -> raise "Expected integer seconds after #{op}, got #{int}"
+      end
+
+    op_code = [{:push_u, amt}] ++ if op == "+", do: [{:op, :ADD}], else: [{:op, :SUB}]
+    do_fold_arith(code_acc ++ op_code, rest, layout, env)
+  end
+
+  defp do_fold_arith(code_acc, rest, _layout, _env) do
+    # stop if no "+/-" next or malformed
+    case rest do
+      [] -> code_acc
+      [next | _] when next in ["and", "or"] -> code_acc
+      # be permissive
+      _ -> code_acc
     end
   end
+
+  # term := now | timestamp | block.timestamp | <state-field> | <param> | <int>
+  defp parse_term([tok | rest], layout, env) do
+    code =
+      case String.downcase(tok) do
+        "now" ->
+          [{:op, :TIMESTAMP}]
+
+        "timestamp" ->
+          [{:op, :TIMESTAMP}]
+
+        "block.timestamp" ->
+          [{:op, :TIMESTAMP}]
+
+        _ ->
+          cond do
+            Map.has_key?(layout, tok) ->
+              slot = Map.fetch!(layout, tok)
+              [{:push_u, slot}, {:op, :SLOAD}]
+
+            Map.has_key?(env, tok) ->
+              load_param(tok, env)
+
+            match?({_, ""}, Integer.parse(tok)) ->
+              {i, ""} = Integer.parse(tok)
+              [{:push_u, i}]
+
+            true ->
+              # unknown symbol -> 0 (defensive)
+              [{:push_u, 0}]
+          end
+      end
+
+    {code, rest}
+  end
+
+  defp parse_term([], _layout, _env), do: {[{:push_u, 0}], []}
 
   # ---- Effects ---------------------------------------------------------------
   defp compile_effect(_c, %Eff{op: :noop}, _layout, _env), do: []
@@ -367,6 +432,32 @@ defmodule Logos.Codegen.EVM do
     cond_code ++
       [{:jumpi_label, l_then}] ++
       else_code ++ [{:jump_label, l_end}, {:label, l_then}] ++ then_code ++ [{:label, l_end}]
+  end
+
+  # ---- Helpers: durations normalization -------------------------------------
+  defp normalize_durations(line) do
+    line
+    # Duration("7d") / Duration('7d') / Duration( " 7h " )
+    |> Regex.replace(~r/Duration\(\s*["']\s*(\d+)\s*([smhdw])\s*["']\s*\)/i, fn _m, n, u ->
+      Integer.to_string(sec(n, u))
+    end)
+    # bare 7d / 12h / 30m / 45s / 2w
+    |> Regex.replace(~r/\b(\d+)\s*([smhdw])\b/i, fn _m, n, u ->
+      Integer.to_string(sec(n, u))
+    end)
+  end
+
+  defp sec(n, u) do
+    {num, _} = Integer.parse("#{n}")
+
+    case String.downcase("#{u}") do
+      "s" -> num
+      "m" -> num * 60
+      "h" -> num * 3600
+      "d" -> num * 86400
+      "w" -> num * 604_800
+      _ -> num
+    end
   end
 
   # ---- Helpers: push immediates or load params ------------------------------
