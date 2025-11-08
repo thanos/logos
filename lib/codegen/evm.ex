@@ -24,11 +24,10 @@ defmodule Logos.Codegen.EVM do
     |> Map.new(fn {k, i} -> {k, i} end)
   end
 
-  # ---- Runtime: dispatcher + clause bodies ----------------------------------
+  # ---- Runtime: selector dispatcher & clause bodies -------------------------
   defp build_runtime(%Contract{} = c, layout) do
     selector_map =
       for %Clause{name: n} <- c.clauses, into: %{} do
-        # 0-arg external signature
         sel = keccak4("#{n}()")
         {n, sel}
       end
@@ -39,9 +38,6 @@ defmodule Logos.Codegen.EVM do
         [{:label, String.to_atom("clause_" <> cl.name)}, body]
       end)
 
-    # Dispatcher:
-    # s = (calldataload(0) >> 224)
-    # if s == sel_i jump to clause_i
     dispatch =
       Enum.flat_map(c.clauses, fn %Clause{name: n} ->
         [
@@ -58,7 +54,7 @@ defmodule Logos.Codegen.EVM do
         ]
 
     header = [
-      # s := shr(224, calldataload(0))
+      # selector := shr(224, calldataload(0))
       {:op, :PUSH1},
       <<0x00>>,
       {:op, :CALLDATALOAD},
@@ -82,20 +78,16 @@ defmodule Logos.Codegen.EVM do
 
     cond_block =
       if with_remedies? do
-        # build combined predicate; if false -> remedies
         pred = compile_pred_conj(prov, layout)
 
         [
-          # stack: cond
           pred,
-          # if cond -> OK
           {:jumpi_label, ok_lbl},
           compile_effect(c, rem, layout),
           {:jump_label, end_lbl},
           {:label, ok_lbl}
         ]
       else
-        # require ...; if false -> revert
         case prov do
           [] ->
             []
@@ -104,9 +96,7 @@ defmodule Logos.Codegen.EVM do
             pred = compile_pred_conj(prov, layout)
 
             [
-              # cond
               pred,
-              # if cond -> OK
               {:jumpi_label, ok_lbl},
               {:op, :PUSH0},
               {:op, :PUSH0},
@@ -117,7 +107,6 @@ defmodule Logos.Codegen.EVM do
       end
 
     [
-      # harmless double label; ensures a jumpdest before body
       {:label, ok_lbl},
       cond_block,
       compile_effect(c, shall, layout),
@@ -127,15 +116,9 @@ defmodule Logos.Codegen.EVM do
   end
 
   # ---- Predicates (subset) ---------------------------------------------------
-  # Accept lines like:
-  #   submitted == true
-  #   accepted != false
-  # Combine with 'and'/'or'/'not' translated by the DSL -> pass raw text here.
-
   defp compile_pred_conj([], _layout), do: [{:push_u, 1}]
 
   defp compile_pred_conj(lines, layout) do
-    # split on 'and'/'or' (left-to-right, no parens)
     tokens =
       lines
       |> Enum.map(&String.trim/1)
@@ -143,15 +126,11 @@ defmodule Logos.Codegen.EVM do
       |> String.replace(~r/\s+/, " ")
       |> String.split(" ")
 
-    # Very small LL(1): handle 'not', 'and', 'or' with comparisons as atoms
     {stack, op} = parse_bool_expr(tokens, layout)
     stack ++ op
   end
 
-  defp parse_bool_expr(tokens, layout) do
-    # returns {code, trailer_code}
-    parse_or(tokens, layout)
-  end
+  defp parse_bool_expr(tokens, layout), do: parse_or(tokens, layout)
 
   defp parse_or(tokens, layout) do
     {code1, rest} = parse_and(tokens, layout)
@@ -160,12 +139,12 @@ defmodule Logos.Codegen.EVM do
 
   defp do_parse_or(code_acc, ["or" | t], layout) do
     {code2, rest} = parse_and(t, layout)
-    # or: (a || b) -> (a + b) > 0 (but easier: a OR b with bitwise OR)
+
     {code_acc ++ code2 ++ [{:op, :OR}], rest}
     |> then(fn {c, r} -> do_parse_or(c, r, layout) end)
   end
 
-  defp do_parse_or(code_acc, rest, _layout), do: {code_acc, rest}
+  defp do_parse_or(code_acc, rest, _), do: {code_acc, rest}
 
   defp parse_and(tokens, layout) do
     {code1, rest} = parse_atom(tokens, layout)
@@ -179,7 +158,7 @@ defmodule Logos.Codegen.EVM do
     |> then(fn {c, r} -> do_parse_and(c, r, layout) end)
   end
 
-  defp do_parse_and(code_acc, rest, _layout), do: {code_acc, rest}
+  defp do_parse_and(code_acc, rest, _), do: {code_acc, rest}
 
   defp parse_atom(["not" | t], layout) do
     {code, rest} = parse_atom(t, layout)
@@ -187,19 +166,15 @@ defmodule Logos.Codegen.EVM do
   end
 
   defp parse_atom(tokens, layout) do
-    # expect: <field> (==|!=) <literal>
     [field, cmp, literal | rest] = tokens
     slot = Map.fetch!(layout, field)
     val = parse_lit(literal)
 
     code =
       [
-        # SLOAD(slot)
         {:push_u, slot},
         {:op, :SLOAD},
-        # const
         {:push_u, val},
-        # equals?
         {:op, :EQ}
       ] ++
         case cmp do
@@ -228,6 +203,22 @@ defmodule Logos.Codegen.EVM do
 
   defp compile_effect(c, %Eff{op: :all, args: list}, layout),
     do: Enum.flat_map(list, &compile_effect(c, &1, layout))
+
+  # NEW: Emit -> LOG2 with topics [keccak("Emitted(string)"), keccak(eventName)], empty data (0 bytes)
+  defp compile_effect(_c, %Eff{op: :emit, args: %{"event" => ev_name}}, _layout) do
+    topic_sig = keccak256_int("Emitted(string)")
+    topic_name = keccak256_int(ev_name)
+
+    [
+      # memory region (offset=0, size=0) – no data payload for now
+      {:op, :PUSH0},
+      {:op, :PUSH0},
+      # topics (top of stack is last pushed)
+      {:push_u, topic_sig},
+      {:push_u, topic_name},
+      {:op, :LOG2}
+    ]
+  end
 
   defp compile_effect(_c, %Eff{op: :set, args: %{"field" => f, "value" => v}}, layout) do
     slot = Map.fetch!(layout, f)
@@ -263,9 +254,8 @@ defmodule Logos.Codegen.EVM do
       ]
   end
 
-  # unsupported effects (emit/transfer) -> no-ops in this backend
-  defp compile_effect(_c, %Eff{op: other}, _layout) when other in [:emit, :transfer],
-    do: []
+  # (still a no-op here) – keep transfers in Solidity backend until you add CALL path
+  defp compile_effect(_c, %Eff{op: :transfer}, _layout), do: []
 
   defp evm_encode(true), do: 1
   defp evm_encode(false), do: 0
@@ -284,18 +274,8 @@ defmodule Logos.Codegen.EVM do
       end)
       |> List.flatten()
 
-    # Copy runtime code from "code" area into memory and RETURN it.
-    # Standard pattern:
-    #   PUSH <size>
-    #   PUSH <offset>
-    #   PUSH 0
-    #   CODECOPY
-    #   PUSH <size>
-    #   PUSH 0
-    #   RETURN
     runtime_size = byte_size(runtime)
 
-    # We embed the runtime right after constructor and compute offsets by iteration until stable.
     constructor_base = fn offset_guess ->
       [
         init_storage,
@@ -309,21 +289,11 @@ defmodule Logos.Codegen.EVM do
       ]
     end
 
-    # Iteratively fix the offset since PUSH sizes depend on the value itself.
-    # First assemble a temporary constructor with offset 0 to get length, then recompute with correct offset.
     tmp = A.assemble(constructor_base.(0))
     offset1 = byte_size(tmp)
     cons1 = A.assemble(constructor_base.(offset1))
-    # Verify if size changed; recompute once more if needed (usually settles)
     offset2 = byte_size(cons1)
-
-    cons =
-      if offset2 == offset1 do
-        cons1
-      else
-        A.assemble(constructor_base.(offset2))
-      end
-
+    cons = if offset2 == offset1, do: cons1, else: A.assemble(constructor_base.(offset2))
     cons <> runtime
   end
 
@@ -331,6 +301,10 @@ defmodule Logos.Codegen.EVM do
   defp keccak4(sig) do
     <<a, b, c, d, _rest::binary>> = :keccakf1600.sha3_256(sig)
     :binary.decode_unsigned(<<a, b, c, d>>)
+  end
+
+  defp keccak256_int(s) when is_binary(s) do
+    :keccakf1600.sha3_256(s) |> :binary.decode_unsigned()
   end
 
   defp uniq(prefix), do: String.to_atom("#{prefix}_#{System.unique_integer([:monotonic])}")

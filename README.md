@@ -65,7 +65,7 @@ Contract WorkForHire_M1
 End
 """
 
-sol = LexLegal.Compiler.compile_to_solidity(dsl)
+sol = Logos.Compiler.compile_to_solidity(dsl)
 IO.puts(sol)
 ```
 You’ll get Solidity like:
@@ -153,7 +153,48 @@ Contract WorkForHire_M1
 End
 """
 
-evm = LexLegal.CompilerEVM.compile_to_evm(dsl)
+evm = Logos.CompilerEVM.compile_to_evm(dsl)
 IO.inspect(evm.runtime_hex, label: "runtime")
 IO.inspect(evm.creation_hex, label: "creation")
+```
+
+The above  example DSL with Emit will  produce runtime code that logs when a clause fires:
+
+```
+dsl = ~S"""
+Contract WorkForHire_M1
+  Parties
+    client : Party = 0xC1e0000000000000000000000000000000000000
+    builder: Party = 0xBu100000000000000000000000000000000000000
+    escrow : Party = 0xEsc00000000000000000000000000000000000000
+
+  State
+    record { submitted : Bool = false, accepted : Bool = false }
+
+  Clauses
+    Clause SubmitWork() : Effect
+      Provided That
+        submitted == false
+      Shall
+        All [
+          Set { field: "submitted", value: true },
+          Emit { event: "Submitted", data: {} }
+        ]
+End
+"""
+
+evm = Logos.CompilerEVM.compile_to_evm(dsl)
+IO.puts("runtime  = #{String.slice(evm.runtime_hex, 0, 66)}…")
+IO.puts("creation = #{String.slice(evm.creation_hex, 0, 66)}…")
+```
+Events can be filtered with (`ethers.js`):
+
+
+```javascript
+const sig = ethers.id("Emitted(string)");
+const ev  = ethers.id("Submitted");
+provider.on({
+  address: contractAddress,
+  topics: [sig, ev]
+}, (log) => console.log("Submitted event log:", log));
 ```
