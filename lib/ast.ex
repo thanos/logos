@@ -13,10 +13,10 @@ defmodule Logos.AST do
         signatures: []
       ])
 
+  # params: list of %{name: "amount", type: :uint256 | :address | :bool}
   defmodule Clause, do: defstruct([:name, params: [], provided: [], shall: nil, remedies: nil])
-  # Effect IR (still language-agnostic)
+
   defmodule Eff do
-    # op: :set | :emit | :all | :if | :transfer | :noop
     defstruct [:op, :args]
   end
 end

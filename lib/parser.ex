@@ -258,10 +258,11 @@ defmodule Logos.Parser do
           |> String.split(",")
           |> Enum.map(&String.trim/1)
           |> Enum.map(fn p ->
-            # allow "x: Type" or just "x"
+            # allow: "x: Type" or "x"
             case String.split(p, ":") |> Enum.map(&String.trim/1) do
-              [id, _t] -> id
-              [id] -> id
+              [id, t] -> %{name: id, type: normalize_param_type(t)}
+              # default
+              [id] -> %{name: id, type: :uint256}
             end
           end)
       end
@@ -286,7 +287,25 @@ defmodule Logos.Parser do
 
     shall = parse_effect(shall_block)
 
-    %Clause{name: name, params: params, provided: provided, shall: shall, remedies: remedies}
+    %Logos.AST.Clause{
+      name: name,
+      params: params,
+      provided: provided,
+      shall: shall,
+      remedies: remedies
+    }
+  end
+
+  defp normalize_param_type(t) do
+    t = String.downcase(t)
+
+    cond do
+      String.starts_with?(t, "address") -> :address
+      String.starts_with?(t, "bool") -> :bool
+      String.starts_with?(t, "int") -> :uint256
+      String.starts_with?(t, "decimal") -> :uint256
+      true -> :uint256
+    end
   end
 
   defp take_after_marker(lines, marker) do
