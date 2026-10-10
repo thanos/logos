@@ -1,0 +1,386 @@
+[
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "current",
+    "id": "lexical.minimal-contract",
+    "title": "Minimal contract with State, Clause, and End",
+    "category": "lexical",
+    "tags": [
+      "parser"
+    ],
+    "source_ref": "docs/quick-introduction.md#2.3",
+    "rationale": "Required sections parse to one clause and a set effect.",
+    "origin": "observed_elixir",
+    "implementation_status": "passes",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\n",
+    "expect": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "name": "C",
+          "parties": {},
+          "defs": {},
+          "state": {
+            "x": "0"
+          },
+          "clauses": [
+            {
+              "name": "A",
+              "params": [],
+              "provided": [
+                "x == 0"
+              ],
+              "shall": {
+                "op": "set",
+                "args": {
+                  "field": "x",
+                  "value": "1"
+                }
+              },
+              "remedies": null
+            }
+          ],
+          "term": null,
+          "law": null,
+          "signatures": []
+        }
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "current",
+    "id": "lexical.documented-sections",
+    "title": "Parties, definitions, state, clause, term, law, and signatures",
+    "category": "lexical",
+    "tags": [
+      "parser"
+    ],
+    "source_ref": "docs/quick-introduction.md#2.3",
+    "rationale": "Header form of every stored section is kept. Whereas is a separate case.",
+    "origin": "observed_elixir",
+    "implementation_status": "passes",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract WorkForHire_M1\n  Parties\n    client : Party = 0xC1e0000000000000000000000000000000000000\n  Definitions\n    let price : Decimal = 10\n  State\n    record { submitted : Bool = false, accepted : Bool = false }\n  Clauses\n    Clause SubmitWork(): Effect\n      Provided That\n        submitted == false\n      Shall\n        All [\n          Set { field: \"submitted\", value: true },\n          Emit { event: \"Submitted\", data: {} }\n        ]\n  Term\n    until now + Duration(\"90d\")\n  GoverningLaw\n    \"New York, USA\"\n  Signatures\n    require client signed\nEnd\n",
+    "expect": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "name": "WorkForHire_M1",
+          "parties": {
+            "client": "0xc1e0000000000000000000000000000000000000"
+          },
+          "defs": {
+            "price": "10"
+          },
+          "state": {
+            "submitted": false,
+            "accepted": false
+          },
+          "clauses": [
+            {
+              "name": "SubmitWork",
+              "params": [],
+              "provided": [
+                "submitted == false"
+              ],
+              "shall": {
+                "op": "all",
+                "args": [
+                  {
+                    "op": "set",
+                    "args": {
+                      "field": "submitted",
+                      "value": true
+                    }
+                  },
+                  {
+                    "op": "emit",
+                    "args": {
+                      "event": "Submitted",
+                      "data": "{}"
+                    }
+                  }
+                ]
+              },
+              "remedies": null
+            }
+          ],
+          "term": "now + Duration(\"90d\")",
+          "law": "New York, USA",
+          "signatures": [
+            "client"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "current",
+    "id": "lexical.crlf",
+    "title": "CRLF line endings parse as LF",
+    "category": "lexical",
+    "tags": [
+      "parser"
+    ],
+    "source_ref": "lib/parser.ex",
+    "rationale": "CRLF is rewritten before splitting lines.",
+    "origin": "observed_elixir",
+    "implementation_status": "passes",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\r\nState\r\n  record { x : Int = 0 }\r\nClauses\r\n  Clause A(): Effect\r\n    Provided That\r\n      x == 0\r\n    Shall\r\n      Set { field: \"x\", value: 1 }\r\nEnd\r\n",
+    "expect": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "name": "C",
+          "parties": {},
+          "defs": {},
+          "state": {
+            "x": "0"
+          },
+          "clauses": [
+            {
+              "name": "A",
+              "params": [],
+              "provided": [
+                "x == 0"
+              ],
+              "shall": {
+                "op": "set",
+                "args": {
+                  "field": "x",
+                  "value": "1"
+                }
+              },
+              "remedies": null
+            }
+          ],
+          "term": null,
+          "law": null,
+          "signatures": []
+        }
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "lexical.missing-end",
+    "title": "Missing End is rejected",
+    "category": "lexical",
+    "tags": [
+      "parser"
+    ],
+    "source_ref": "docs/quick-introduction.md#2.7",
+    "rationale": "The grammar ends the contract at End.",
+    "origin": "logos_spec",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-PARSE-TRAILING",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\n",
+    "expect": {
+      "parse": {
+        "status": "error",
+        "category": "trailing_input"
+      }
+    },
+    "observed": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "name": "C",
+          "parties": {},
+          "defs": {},
+          "state": {
+            "x": "0"
+          },
+          "clauses": [
+            {
+              "name": "A",
+              "params": [],
+              "provided": [
+                "x == 0"
+              ],
+              "shall": {
+                "op": "set",
+                "args": {
+                  "field": "x",
+                  "value": "1"
+                }
+              },
+              "remedies": null
+            }
+          ],
+          "term": null,
+          "law": null,
+          "signatures": []
+        }
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "lexical.trailing-garbage",
+    "title": "Trailing garbage after End is rejected",
+    "category": "lexical",
+    "tags": [
+      "parser"
+    ],
+    "source_ref": "docs/quick-introduction.md#2.7",
+    "rationale": "Input must be consumed completely.",
+    "origin": "logos_spec",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-PARSE-TRAILING",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\nGARBAGE\n",
+    "expect": {
+      "parse": {
+        "status": "error",
+        "category": "trailing_input"
+      }
+    },
+    "observed": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "name": "C",
+          "parties": {},
+          "defs": {},
+          "state": {
+            "x": "0"
+          },
+          "clauses": [
+            {
+              "name": "A",
+              "params": [],
+              "provided": [
+                "x == 0"
+              ],
+              "shall": {
+                "op": "set",
+                "args": {
+                  "field": "x",
+                  "value": "1"
+                }
+              },
+              "remedies": null
+            }
+          ],
+          "term": null,
+          "law": null,
+          "signatures": []
+        }
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "current",
+    "id": "lexical.invalid-utf8",
+    "title": "Invalid UTF-8 does not parse as a contract",
+    "category": "lexical",
+    "tags": [
+      "parser"
+    ],
+    "source_ref": "lib/parser.ex",
+    "rationale": "A binary that is not a Contract header raises RuntimeError. JSON cannot hold invalid UTF-8, so the source is hex.",
+    "origin": "observed_elixir",
+    "implementation_status": "passes",
+    "phases": [
+      "parse"
+    ],
+    "logos_source_hex": "FFFE",
+    "expect": {
+      "parse": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message_contains": "Expected `Contract <Name>`"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "lexical.governing-law-one-line",
+    "title": "Documented one-line GoverningLaw sets the law",
+    "category": "lexical",
+    "tags": [
+      "parser"
+    ],
+    "source_ref": "docs/quick-introduction.md#2.3",
+    "rationale": "The introduction writes the law on the same line as the header.",
+    "origin": "logos_spec",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-PARSE-LAW-LINE",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      NoOp\nGoverningLaw \"New York, USA\"\nEnd\n",
+    "expect": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "law": "New York, USA"
+        }
+      }
+    },
+    "observed": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "law": null
+        }
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P2",
+    "class": "spec",
+    "id": "lexical.unicode-identifier",
+    "title": "Unicode identifier policy is unspecified",
+    "category": "lexical",
+    "tags": [
+      "parser",
+      "spec-gap"
+    ],
+    "source_ref": "docs/quick-introduction.md#2.1",
+    "rationale": "The introduction says identifiers are snake_case and does not define Unicode. This is a spec gap, not a passing requirement.",
+    "origin": "logos_spec",
+    "implementation_status": "spec_gap",
+    "phases": [
+      "parse"
+    ],
+    "note": "FUTURE_SPEC: decide whether non-ASCII identifiers are rejected.",
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\n"
+  }
+]

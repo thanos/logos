@@ -1,4 +1,16 @@
 defmodule Logos.Codegen.EVM do
+  @moduledoc """
+  Backend: emit **raw EVM bytecode** (both creation and runtime).
+
+  Features:
+    * Clause -> external function with ABI selector and static param decoding
+    * `Provided That` with `== != < > <= >=`, **now/timestamp** via `TIMESTAMP`
+    * Time arithmetic with `± seconds` and `Duration("7d")` or bare `7d/12h/…`
+    * Effects: `Set`, `All`, `If`, `Emit` (LOG2 topics only), `Transfer` (ERC-20 `transferFrom`)
+    * Atomicity: failures (predicate or call) revert the clause
+
+  Returns `%{runtime_hex: \"0x…\", creation_hex: \"0x…\"}` suitable for deployment.
+  """
   @moduledoc false
   alias Logos.AST.{Contract, Clause, Eff}
   alias Logos.EVM.Assembler, as: A
@@ -53,15 +65,7 @@ defmodule Logos.Codegen.EVM do
           {:op, :REVERT}
         ]
 
-    header = [
-      # selector := shr(224, calldataload(0))
-      {:op, :PUSH1},
-      <<0x00>>,
-      {:op, :CALLDATALOAD},
-      {:op, :PUSH1},
-      <<0xE0>>,
-      {:op, :SHR}
-    ]
+    header = [{:push_u, 0}, {:op, :CALLDATALOAD}, {:push_u, 0xE0}, {:op, :SHR}]
 
     A.assemble(header ++ dispatch ++ clause_blocks ++ [{:op, :STOP}])
   end
@@ -436,15 +440,20 @@ defmodule Logos.Codegen.EVM do
 
   # ---- Helpers: durations normalization -------------------------------------
   defp normalize_durations(line) do
-    line
     # Duration("7d") / Duration('7d') / Duration( " 7h " )
-    |> Regex.replace(~r/Duration\(\s*["']\s*(\d+)\s*([smhdw])\s*["']\s*\)/i, fn _m, n, u ->
-      Integer.to_string(sec(n, u))
-    end)
+    s1 =
+      Regex.replace(
+        ~r/Duration\(\s*["']\s*(\d+)\s*([smhdw])\s*["']\s*\)/i,
+        line,
+        fn _m, n, u -> Integer.to_string(sec(n, u)) end
+      )
+
     # bare 7d / 12h / 30m / 45s / 2w
-    |> Regex.replace(~r/\b(\d+)\s*([smhdw])\b/i, fn _m, n, u ->
-      Integer.to_string(sec(n, u))
-    end)
+    Regex.replace(
+      ~r/\b(\d+)\s*([smhdw])\b/i,
+      s1,
+      fn _m, n, u -> Integer.to_string(sec(n, u)) end
+    )
   end
 
   defp sec(n, u) do
@@ -544,13 +553,14 @@ defmodule Logos.Codegen.EVM do
   end
 
   # ---- hashing / encoding helpers -------------------------------------------
-  defp keccak4(sig) do
-    <<a, b, c, d, _::binary>> = :keccakf1600.sha3_256(sig)
+  defp keccak4(sig) when is_binary(sig) do
+    <<a, b, c, d, _::binary>> = :crypto.hash(:sha3_256, sig)
     :binary.decode_unsigned(<<a, b, c, d>>)
   end
 
-  defp keccak256_int(s) when is_binary(s),
-    do: :keccakf1600.sha3_256(s) |> :binary.decode_unsigned()
+  defp keccak256_int(s) when is_binary(s) do
+    :crypto.hash(:sha3_256, s) |> :binary.decode_unsigned()
+  end
 
   defp evm_encode(true), do: 1
   defp evm_encode(false), do: 0

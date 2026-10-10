@@ -1,0 +1,961 @@
+[
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.opcode-stop",
+    "title": "STOP assembles to 0x00",
+    "rationale": "STOP is in the assembler table and must keep its Yellow Paper opcode.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "STOP"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x00",
+        "byte_size": "1"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.opcode-add",
+    "title": "ADD assembles to 0x01",
+    "rationale": "ADD is in the assembler table and must keep its Yellow Paper opcode.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "ADD"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x01",
+        "byte_size": "1"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.opcode-push0",
+    "title": "PUSH0 assembles to 0x5f",
+    "rationale": "PUSH0 is in the assembler table and must keep its Yellow Paper opcode.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "PUSH0"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x5f",
+        "byte_size": "1"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.opcode-push1",
+    "title": "PUSH1 assembles to 0x60",
+    "rationale": "PUSH1 is in the assembler table and must keep its Yellow Paper opcode.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "PUSH1"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x60",
+        "byte_size": "1"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.opcode-jumpdest",
+    "title": "JUMPDEST assembles to 0x5b",
+    "rationale": "JUMPDEST is in the assembler table and must keep its Yellow Paper opcode.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "JUMPDEST"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x5b",
+        "byte_size": "1"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.opcode-jump",
+    "title": "JUMP assembles to 0x56",
+    "rationale": "JUMP is in the assembler table and must keep its Yellow Paper opcode.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "JUMP"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x56",
+        "byte_size": "1"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.opcode-jumpi",
+    "title": "JUMPI assembles to 0x57",
+    "rationale": "JUMPI is in the assembler table and must keep its Yellow Paper opcode.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "JUMPI"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x57",
+        "byte_size": "1"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.opcode-timestamp",
+    "title": "TIMESTAMP assembles to 0x42",
+    "rationale": "TIMESTAMP is in the assembler table and must keep its Yellow Paper opcode.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "TIMESTAMP"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x42",
+        "byte_size": "1"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.opcode-call",
+    "title": "CALL assembles to 0xf1",
+    "rationale": "CALL is in the assembler table and must keep its Yellow Paper opcode.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "CALL"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0xf1",
+        "byte_size": "1"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.opcode-revert",
+    "title": "REVERT assembles to 0xfd",
+    "rationale": "REVERT is in the assembler table and must keep its Yellow Paper opcode.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "REVERT"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0xfd",
+        "byte_size": "1"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.opcode-log2",
+    "title": "LOG2 assembles to 0xa2",
+    "rationale": "LOG2 is in the assembler table and must keep its Yellow Paper opcode.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "LOG2"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0xa2",
+        "byte_size": "1"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.opcode-sstore",
+    "title": "SSTORE assembles to 0x55",
+    "rationale": "SSTORE is in the assembler table and must keep its Yellow Paper opcode.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "SSTORE"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x55",
+        "byte_size": "1"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.push0-via-zero",
+    "title": "push_u 0 is PUSH0",
+    "rationale": "Shanghai allows PUSH0. The assembler selects it for zero.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "push_u": "0"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x5f"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.push-boundaries",
+    "title": "PUSH width boundaries",
+    "rationale": "1 and 255 are PUSH1, 256 and 65535 are PUSH2, 65536 is PUSH3.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "push_u": "255"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x60ff"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.push-256",
+    "title": "256 is PUSH2",
+    "rationale": "256 does not fit in PUSH1.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "push_u": "256"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x610100"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.push-65535",
+    "title": "65535 is PUSH2",
+    "rationale": "The PUSH2 maximum.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "push_u": "65535"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x61ffff"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.push-65536",
+    "title": "65536 is PUSH3",
+    "rationale": "65536 crosses the PUSH2 boundary.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "push_u": "65536"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x62010000"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.push-uint256-max",
+    "title": "2^256-1 is PUSH32",
+    "rationale": "The largest unsigned 256-bit immediate is 33 bytes with opcode 0x7f.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "push_u": "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "byte_size": "33",
+        "contains": [
+          "7f"
+        ]
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.push-negative",
+    "title": "Negative push is rejected",
+    "rationale": "PUSH immediates are unsigned unless a future spec says otherwise.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "push_u": "-1"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message_contains": "Unsupported instruction"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.push-overflow",
+    "title": "Values wider than 32 bytes are rejected",
+    "rationale": "2^256 must not be encoded as opcode 0x80.",
+    "origin": "ethereum_standard",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-ASM-PUSH-OVERFLOW",
+    "instructions": [
+      {
+        "push_u": "115792089237316195423570985008687907853269984665640564039457584007913129639936"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "error",
+        "exception": "RuntimeError"
+      }
+    },
+    "observed": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x80010000000000000000000000000000000000000000000000000000000000000000",
+        "byte_size": "34"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.raw-byte",
+    "title": "A raw byte after PUSH1 is rejected",
+    "rationale": "Loose immediates desynchronize later passes. Rejection is the normative result.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "PUSH1"
+      },
+      {
+        "raw_byte": "01"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message_contains": "Unsupported instruction"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.unknown-shr",
+    "title": "SHR is reported as an unknown opcode",
+    "rationale": "The codegen emits SHR, but the assembler must not invent a byte for an unlisted opcode.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "SHR"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message": "Unknown opcode: :SHR"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "current",
+    "id": "asm.unknown-shl",
+    "title": "SHL is an unknown opcode",
+    "rationale": "Observed assembler behavior for an opcode the codegen emits.",
+    "origin": "observed_elixir",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "SHL"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "error",
+        "message": "Unknown opcode: :SHL"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "current",
+    "id": "asm.unknown-gas",
+    "title": "GAS is an unknown opcode",
+    "rationale": "Observed assembler behavior for an opcode the codegen emits.",
+    "origin": "observed_elixir",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "GAS"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "error",
+        "message": "Unknown opcode: :GAS"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.nested-list",
+    "title": "Nested instruction lists flatten",
+    "rationale": "The assembler documents that lists are flattened.",
+    "origin": "reviewed_reference",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "nested": [
+          {
+            "op": "PUSH0"
+          }
+        ]
+      },
+      {
+        "op": "STOP"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x5f00"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P1",
+    "class": "spec",
+    "id": "asm.duplicate-label",
+    "title": "Duplicate labels are rejected",
+    "rationale": "Two definitions of one label are ambiguous.",
+    "origin": "ethereum_standard",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-ASM-DUP-LABEL",
+    "instructions": [
+      {
+        "label": "L"
+      },
+      {
+        "label": "L"
+      },
+      {
+        "op": "STOP"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "error",
+        "category": "duplicate_label"
+      }
+    },
+    "observed": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x5b5b00"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P1",
+    "class": "spec",
+    "id": "asm.undefined-label",
+    "title": "Undefined labels are a structured error",
+    "rationale": "A jump to a missing label must not be a KeyError.",
+    "origin": "ethereum_standard",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-ASM-UNDEFINED-LABEL",
+    "instructions": [
+      {
+        "jump_label": "missing"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "error",
+        "category": "undefined_label"
+      }
+    },
+    "observed": {
+      "assemble": {
+        "status": "error",
+        "exception": "KeyError",
+        "message_contains": "missing"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.jump-terminates",
+    "title": "Forward jump assembles under the watchdog",
+    "rationale": "Historic left_pad recursion must finish and land on JUMPDEST.",
+    "origin": "ethereum_standard",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-ASM-LEFT-PAD",
+    "timeout_ms": 800,
+    "instructions": [
+      {
+        "push_u": "1"
+      },
+      {
+        "jump_label": "L"
+      },
+      {
+        "label": "L"
+      },
+      {
+        "op": "STOP"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok"
+      }
+    },
+    "observed": {
+      "assemble": {
+        "status": "timeout"
+      }
+    },
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "asm.jumpi-width",
+    "title": "JUMPI placeholder size matches the encoding",
+    "rationale": "Pass 1 currently counts 3 bytes and pass 2 writes 4. The hang masks the measurement.",
+    "origin": "ethereum_standard",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-ASM-JUMP-WIDTH",
+    "timeout_ms": 800,
+    "instructions": [
+      {
+        "push_u": "1"
+      },
+      {
+        "jumpi_label": "L"
+      },
+      {
+        "label": "L"
+      },
+      {
+        "op": "STOP"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "byte_size": "6"
+      }
+    },
+    "observed": {
+      "assemble": {
+        "status": "timeout"
+      }
+    },
+    "note": "Normative size is PUSH1 imm + PUSH2 addr + JUMPI + JUMPDEST + STOP once left_pad returns. 6 bytes assumes the pushed 1 is PUSH1. Re-measure if the jump width fix changes the address width.",
+    "category": "evm",
+    "tags": [
+      "assembler"
+    ],
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ]
+  }
+]

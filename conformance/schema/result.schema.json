@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/thanos/logos/conformance/schema/result.schema.json",
+  "title": "Logos conformance result",
+  "type": "object",
+  "required": ["fixture_version", "versions", "counts", "results"],
+  "properties": {
+    "fixture_version": {"const": 1},
+    "generated_at": {"type": "string"},
+    "versions": {"type": "object"},
+    "counts": {"type": "object"},
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "status"],
+        "properties": {
+          "id": {"type": "string"},
+          "status": {
+            "enum": ["PASS", "FAIL", "KNOWN_FAILURE", "BLOCKED", "SKIPPED", "TIMEOUT", "NOT_RUN", "UNEXPECTED_PASS"]
+          },
+          "class": {"type": "string"},
+          "priority": {"type": "string"},
+          "known_failure_id": {"type": ["string", "null"]},
+          "blocked_by": {"type": ["string", "null"]},
+          "elapsed_ms": {"type": "string", "description": "Decimal string. The corpus canonical form does not use JSON numbers."},
+          "reason": {"type": "string"},
+          "message": {"type": "string"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,80 @@
+name: conformance
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+  schedule:
+    - cron: "0 6 * * *"
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.18.4"
+          otp-version: "28.3.1"
+      - run: mix deps.get
+      - run: mix format --check-formatted
+      - run: mix test --seed 4242
+      - run: bash scripts/verify_fixtures.sh
+
+  anvil:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.18.4"
+          otp-version: "28.3.1"
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v0.2.0
+      - name: Install solc 0.8.28
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL -o "$HOME/.local/bin/solc" https://github.com/ethereum/solidity/releases/download/v0.8.28/solc-static-linux
+          chmod +x "$HOME/.local/bin/solc"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - run: mix deps.get
+      - name: Anvil and solc differential
+        run: bash scripts/run_conformance.sh --group evm
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.18.4"
+          otp-version: "28.3.1"
+      - run: mix deps.get
+      - run: mix coveralls.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coveralls-json
+          path: cover/excoveralls.json
+
+  nightly:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.18.4"
+          otp-version: "28.3.1"
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v0.2.0
+      - name: Install solc 0.8.28
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL -o "$HOME/.local/bin/solc" https://github.com/ethereum/solidity/releases/download/v0.8.28/solc-static-linux
+          chmod +x "$HOME/.local/bin/solc"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - run: mix deps.get
+      - run: mix test --seed 4242 --only nightly
+      - run: bash scripts/mutation_check.sh

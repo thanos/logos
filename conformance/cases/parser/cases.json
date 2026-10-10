@@ -1,0 +1,567 @@
+[
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "current",
+    "id": "parser.params",
+    "title": "Address and Int parameters",
+    "category": "parser",
+    "tags": [
+      "parser"
+    ],
+    "source_ref": "lib/ast.ex",
+    "rationale": "Address stays :address and Int becomes :uint256.",
+    "origin": "observed_elixir",
+    "implementation_status": "passes",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\n  Parties\n    client : Party = 0xC1e0000000000000000000000000000000000000\n  State\n    record { x : Int = 0 }\n  Clauses\n    Clause Pay(to: Address, amount: Int): Effect\n      Provided That\n        x == 0\n      Shall\n        Transfer { asset: 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, from: client, to: to, amount: amount }\nEnd\n",
+    "expect": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "clauses": [
+            {
+              "name": "Pay",
+              "params": [
+                {
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "shall": {
+                "op": "transfer"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "parser.unknown-param-type",
+    "title": "Unknown parameter types are rejected",
+    "category": "parser",
+    "tags": [
+      "parser",
+      "types"
+    ],
+    "source_ref": "docs/quick-introduction.md#2.2",
+    "rationale": "Party is not silently an unsigned integer.",
+    "origin": "logos_spec",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-PARSE-TYPE-DEFAULT",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(p: Party): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\n",
+    "expect": {
+      "parse": {
+        "status": "error",
+        "category": "unknown_type"
+      }
+    },
+    "observed": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "clauses": [
+            {
+              "params": [
+                {
+                  "name": "p",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P1",
+    "class": "spec",
+    "id": "parser.duplicate-clause",
+    "title": "Duplicate clause names are rejected",
+    "category": "parser",
+    "tags": [
+      "parser"
+    ],
+    "source_ref": "docs/quick-introduction.md#3",
+    "rationale": "Two clauses cannot share a name.",
+    "origin": "logos_spec",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-PARSE-DUP",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\n  Clause A(): Effect\n    Provided That\n      x == 1\n    Shall\n      Set { field: \"x\", value: 0 }\nEnd\n",
+    "expect": {
+      "parse": {
+        "status": "error",
+        "category": "duplicate_clause"
+      }
+    },
+    "observed": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "clauses": [
+            {
+              "name": "A"
+            },
+            {
+              "name": "A"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "parser.blank-before-clause",
+    "title": "Blank line before a clause is a diagnostic",
+    "category": "parser",
+    "tags": [
+      "parser"
+    ],
+    "source_ref": "lib/parser.ex",
+    "rationale": "Ordinary invalid layout must not raise MatchError.",
+    "origin": "logos_spec",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-PARSE-OPAQUE-ERROR",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\n",
+    "expect": {
+      "parse": {
+        "status": "error",
+        "category": "clause_header"
+      }
+    },
+    "observed": {
+      "parse": {
+        "status": "error",
+        "exception": "MatchError",
+        "message_contains": "nil"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "parser.bad-param-colons",
+    "title": "A parameter with extra colons is a diagnostic",
+    "category": "parser",
+    "tags": [
+      "parser"
+    ],
+    "source_ref": "lib/parser.ex",
+    "rationale": "Ordinary invalid parameters must not raise CaseClauseError.",
+    "origin": "logos_spec",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-PARSE-OPAQUE-ERROR",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(a:b:c): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\n",
+    "expect": {
+      "parse": {
+        "status": "error",
+        "category": "parameter"
+      }
+    },
+    "observed": {
+      "parse": {
+        "status": "error",
+        "exception": "CaseClauseError"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "parser.missing-state",
+    "title": "Missing State is reported",
+    "category": "parser",
+    "tags": [
+      "parser"
+    ],
+    "source_ref": "lib/parser.ex",
+    "rationale": "State is required and the current error names the section.",
+    "origin": "logos_spec",
+    "implementation_status": "passes",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\nClauses\n  Clause A(): Effect\nEnd\n",
+    "expect": {
+      "parse": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message_contains": "Section `State` not found"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "parser.if-effect",
+    "title": "If is an effect node",
+    "category": "parser",
+    "tags": [
+      "parser",
+      "effects"
+    ],
+    "source_ref": "docs/quick-introduction.md#2.5",
+    "rationale": "If { cond, then_, else_ } is in the effect grammar.",
+    "origin": "logos_spec",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-PARSE-IF",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      If { cond: x == 0, then_: NoOp, else_: NoOp }\nEnd\n",
+    "expect": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "clauses": [
+            {
+              "shall": {
+                "op": "if"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "observed": {
+      "parse": {
+        "status": "error",
+        "exception": "UndefinedError",
+        "message_contains": "Enumerable"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "parser.noop-keyword",
+    "title": "NoOp is the noop effect",
+    "category": "parser",
+    "tags": [
+      "effects"
+    ],
+    "source_ref": "docs/quick-introduction.md#2.5",
+    "rationale": "The keyword NoOp is not an event.",
+    "origin": "logos_spec",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-PARSE-NOOP-ESCROW",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      NoOp\nEnd\n",
+    "expect": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "clauses": [
+            {
+              "shall": {
+                "op": "noop"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "observed": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "clauses": [
+            {
+              "shall": {
+                "op": "emit",
+                "args": {
+                  "event": "Note"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "current",
+    "id": "parser.empty-shall",
+    "title": "Empty Shall is noop",
+    "category": "parser",
+    "tags": [
+      "effects"
+    ],
+    "source_ref": "lib/parser.ex",
+    "rationale": "An empty effect body is the only noop the parser builds.",
+    "origin": "observed_elixir",
+    "implementation_status": "passes",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\nEnd\n",
+    "expect": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "clauses": [
+            {
+              "shall": {
+                "op": "noop",
+                "args": {}
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "parser.escrow",
+    "title": "Escrow is a first-class effect",
+    "category": "parser",
+    "tags": [
+      "effects"
+    ],
+    "source_ref": "docs/quick-introduction.md#2.5",
+    "rationale": "Escrow is documented and must not become a Note.",
+    "origin": "logos_spec",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-PARSE-NOOP-ESCROW",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      Escrow { asset: currency, agent: escrow, payer: client, payee: builder, amount: price, release_if: \"ACCEPTED\" }\nEnd\n",
+    "expect": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "clauses": [
+            {
+              "shall": {
+                "op": "escrow"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "observed": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "clauses": [
+            {
+              "shall": {
+                "op": "emit",
+                "args": {
+                  "event": "Note"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P1",
+    "class": "spec",
+    "id": "parser.nested-all",
+    "title": "Nested All keeps the inner set",
+    "category": "parser",
+    "tags": [
+      "effects"
+    ],
+    "source_ref": "docs/quick-introduction.md#2.5",
+    "rationale": "All nests. The inner All is not raw text.",
+    "origin": "logos_spec",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-PARSE-NESTED-ALL",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      All [\n        All [\n          Set { field: \"x\", value: 1 }\n        ]\n      ]\nEnd\n",
+    "expect": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "clauses": [
+            {
+              "shall": {
+                "op": "all",
+                "args": [
+                  {
+                    "op": "all"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "observed": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "clauses": [
+            {
+              "shall": {
+                "op": "all",
+                "args": [
+                  {
+                    "op": "emit"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P1",
+    "class": "spec",
+    "id": "parser.whereas-dropped",
+    "title": "Whereas assertions are kept or rejected",
+    "category": "parser",
+    "tags": [
+      "legal"
+    ],
+    "source_ref": "docs/quick-introduction.md#2.3",
+    "rationale": "A Whereas line must not vanish while parse succeeds.",
+    "origin": "logos_spec",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-PARSE-WHEREAS",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\nWhereas\n  assert price > 0\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\n",
+    "expect": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "whereas": [
+            "price > 0"
+          ]
+        }
+      }
+    },
+    "observed": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "name": "C",
+          "parties": {},
+          "defs": {},
+          "state": {
+            "x": "0"
+          },
+          "clauses": [
+            {
+              "name": "A",
+              "params": [],
+              "provided": [
+                "x == 0"
+              ],
+              "shall": {
+                "op": "set",
+                "args": {
+                  "field": "x",
+                  "value": "1"
+                }
+              },
+              "remedies": null
+            }
+          ],
+          "term": null,
+          "law": null,
+          "signatures": []
+        }
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "current",
+    "id": "parser.predicate-text",
+    "title": "Predicates stay raw text",
+    "category": "parser",
+    "tags": [
+      "expressions"
+    ],
+    "source_ref": "lib/parser.ex",
+    "rationale": "and, now, and durations are not expression nodes yet. The line is preserved.",
+    "origin": "observed_elixir",
+    "implementation_status": "passes",
+    "phases": [
+      "parse"
+    ],
+    "logos_source": "Contract C\nState\n  record { start_ts : Int = 1700000000 }\nClauses\n  Clause Release(): Effect\n    Provided That\n      now >= start_ts + Duration(\"7d\")\n    Shall\n      Set { field: \"start_ts\", value: 1 }\nEnd\n",
+    "expect": {
+      "parse": {
+        "status": "ok",
+        "ast": {
+          "clauses": [
+            {
+              "provided": [
+                "now >= start_ts + Duration(\"7d\")"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+]

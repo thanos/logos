@@ -1,9 +1,17 @@
 defmodule Logos.Codegen.Solidity do
-  @moduledoc false
+  @moduledoc """
+  Backend that emits **Solidity** source from the DSL AST.
+
+  It’s intentionally small/transparent for inspection and round-tripping.
+  For on-chain deployment, use the EVM bytecode backend.
+  """
+
   alias Logos.AST.{Contract, Clause, Eff}
 
+  @doc "Emit Solidity source for a parsed contract."
+  @spec emit(Contract.t()) :: String.t()
   def emit(%Contract{} = c) do
-    [
+    iodata = [
       "pragma solidity ^0.8.20;\n",
       header(c),
       "contract ",
@@ -11,51 +19,66 @@ defmodule Logos.Codegen.Solidity do
       " {\n",
       "  // ---- parties ----\n",
       for {id, addr} <- c.parties do
-        "  address public " <> id <> " = " <> solidity_addr(addr) <> ";\n"
+        ["  address public ", id, " = ", solidity_addr(addr), ";\n"]
       end,
       "\n  // ---- state ----\n",
       for {k, v} <- c.state do
-        "  " <> storage_decl(k, v) <> " = " <> lit(v) <> ";\n"
+        ["  ", storage_decl(k, v), " = ", lit(v), ";\n"]
       end,
       "\n  // ---- events ----\n",
       "  event Emitted(string ev, string json);\n",
-      "  event TransferNote(string asset, address from_, address to_, uint256 amount);\n",
+      "  event TransferNote(address asset, address from_, address to_, uint256 amount);\n",
       "\n  // ---- clauses ----\n",
       for %Clause{} = cl <- c.clauses do
         emit_clause(c, cl)
       end,
       "}\n"
     ]
-    |> IO.iodata_to_binary()
+
+    IO.iodata_to_binary(iodata)
   end
 
-  defp header(c) do
-    law = if c.law, do: " // Law: " <> c.law <> "\n", else: "\n"
-    ["// Auto-generated from legal DSL\n", law]
-  end
+  # ---------------------------------------------------------------------------
 
-  defp storage_decl(k, v) do
-    type =
-      case v do
-        true -> "bool"
-        false -> "bool"
-        i when is_integer(i) -> "int256"
-        # default; customize as needed
-        {:raw, _} -> "int256"
-        # represent Option None as false sentinel
-        :none -> "bool"
-        {:some, _} -> "bool"
-        <<"0x", _::binary>> -> "address"
-        _ -> "string"
+  defp header(%Contract{law: nil}), do: "// Auto-generated from legal DSL\n\n"
+
+  defp header(%Contract{law: law}),
+    do: ["// Auto-generated from legal DSL\n// Governing law: ", law, "\n\n"]
+
+  defp storage_decl(key, value) do
+    sol_type =
+      cond do
+        is_boolean(value) ->
+          "bool"
+
+        is_integer(value) ->
+          "int256"
+
+        is_binary(value) and String.starts_with?(value, "0x") and byte_size(value) >= 42 ->
+          "address"
+
+        match?({:raw, _}, value) ->
+          "int256"
+
+        value in [:none] or match?({:some, _}, value) ->
+          "bool"
+
+        true ->
+          "string"
       end
 
-    type <> " public " <> k
+    sol_type <> " public " <> key
   end
 
   defp solidity_addr(<<"0x", _::binary>> = a), do: a
-  defp solidity_addr(other), do: "address(uint160(uint(keccak256(bytes(" <> lit(other) <> ")))))"
 
-  # ---- clause emit ----------------------------------------------------------
+  # Derive a pseudo-address from a string literal (rare path, for convenience)
+  defp solidity_addr(other) when is_binary(other) do
+    # address(uint160(uint(keccak256(bytes("<other>")))))
+    ["address(uint160(uint(keccak256(bytes(", lit(other), ")))))"] |> IO.iodata_to_binary()
+  end
+
+  # ----------------------------- clauses -------------------------------------
 
   defp emit_clause(contract, %Clause{
          name: name,
@@ -64,36 +87,23 @@ defmodule Logos.Codegen.Solidity do
          shall: shall,
          remedies: rem
        }) do
+    # For readability we render all params as int256/address/bool based on declared type.
     sig =
       params
-      # simple typed params; adjust as needed
-      |> Enum.map(fn p -> "int256 " <> p end)
-      |> Enum.join(", ")
+      |> Enum.map(fn %{name: n, type: t} -> [sol_param_type(t), " ", n] end)
+      |> Enum.intersperse(", ")
+      |> IO.iodata_to_binary()
 
-    reqs =
-      prov
-      |> Enum.map(&compile_pred(contract, &1))
-      |> Enum.map(fn pred -> "    require(" <> pred <> ", \"ProvidedThat failed\");\n" end)
-      |> case do
-        [] -> ""
-        xs -> Enum.join(xs)
-      end
-
-    body =
-      if rem do
-        # We model Provided as a combined predicate (all-and); if fails -> remedies
+    # Remedies branch: if provided fails, execute remedies and return; else do shall.
+    cond do
+      rem != nil ->
         pred_all =
           case prov do
-            [] ->
-              "true"
-
-            _ ->
-              prov
-              |> Enum.map(&compile_pred(contract, &1))
-              |> Enum.join(" && ")
+            [] -> "true"
+            _ -> prov |> Enum.map(&compile_pred(contract, &1)) |> Enum.join(" && ")
           end
 
-        [
+        body = [
           "  function ",
           name,
           "(",
@@ -108,8 +118,16 @@ defmodule Logos.Codegen.Solidity do
           indent(compile_effect(contract, shall), 4),
           "  }\n\n"
         ]
-      else
-        [
+
+        IO.iodata_to_binary(body)
+
+      true ->
+        reqs =
+          prov
+          |> Enum.map(&compile_pred(contract, &1))
+          |> Enum.map(fn p -> ["    require(", p, ', "ProvidedThat failed");', ?\n] end)
+
+        body = [
           "  function ",
           name,
           "(",
@@ -119,47 +137,47 @@ defmodule Logos.Codegen.Solidity do
           indent(compile_effect(contract, shall), 4),
           "  }\n\n"
         ]
-      end
 
-    IO.iodata_to_binary(body)
+        IO.iodata_to_binary(body)
+    end
   end
 
-  # ---- predicates (very small subset) --------------------------------------
+  defp sol_param_type(:address), do: "address"
+  defp sol_param_type(:bool), do: "bool"
+  defp sol_param_type(:uint256), do: "uint256"
+  defp sol_param_type(_), do: "uint256"
 
-  defp compile_pred(_c, p) do
+  # ------------------------- predicates & effects -----------------------------
+
+  # Very light rewrite: AND/OR/NOT to Solidity, keep existing operators.
+  defp compile_pred(_c, p) when is_binary(p) do
     p
-    |> String.replace("=", "==")
-    |> String.replace("<>", "!=")
-    |> String.replace(~r/\bnot\b/, "!")
-    |> String.replace(~r/\band\b/, "&&")
-    |> String.replace(~r/\bor\b/, "||")
-    |> String.replace(~r/\btrue\b/, "true")
-    |> String.replace(~r/\bfalse\b/, "false")
+    |> replace_word("and", "&&")
+    |> replace_word("or", "||")
+    |> replace_word("not", "!")
+
+    # keep ==, !=, <, >, <=, >= intact; do NOT touch single '=' anywhere
   end
 
-  # ---- effects --------------------------------------------------------------
+  defp replace_word(text, word, repl) do
+    Regex.replace(~r/\b#{Regex.escape(word)}\b/, text, repl)
+  end
 
   defp compile_effect(_c, %Eff{op: :noop}), do: "    // NoOp\n"
 
-  defp compile_effect(c, %Eff{op: :all, args: list}) do
+  defp compile_effect(c, %Eff{op: :all, args: list}) when is_list(list) do
     list
     |> Enum.map(&compile_effect(c, &1))
     |> Enum.join()
   end
 
-  defp compile_effect(_c, %Eff{op: :emit, args: %{"event" => ev} = m}) do
-    data =
-      case Map.get(m, "data") do
-        nil -> "{}"
-        s when is_binary(s) -> s
-        other -> inspect(other)
-      end
-
-    "    emit Emitted(" <> lit(ev) <> ", " <> lit(data) <> ");\n"
+  defp compile_effect(_c, %Eff{op: :emit, args: %{"event" => ev}}) do
+    # data payload is ignored in this simple Solidity backend
+    ["    emit Emitted(", lit(ev), ", \"{}\");\n"] |> IO.iodata_to_binary()
   end
 
   defp compile_effect(_c, %Eff{op: :set, args: %{"field" => f, "value" => v}}) do
-    "    " <> f <> " = " <> lit(v) <> ";\n"
+    ["    ", f, " = ", lit(v), ";\n"] |> IO.iodata_to_binary()
   end
 
   defp compile_effect(c, %Eff{op: :if, args: %{"cond" => cond, "then" => t, "else" => e}}) do
@@ -175,57 +193,55 @@ defmodule Logos.Codegen.Solidity do
     |> IO.iodata_to_binary()
   end
 
-  # Note: Prototype emits an event. To wire an actual ERC-20 call, map asset to address & call IERC20.
-  defp compile_effect(_c, %Eff{op: :transfer, args: kv}) do
-    asset = Map.get(kv, "asset", "\"asset\"") |> to_asset_string()
-    from_ = Map.get(kv, "from", "address(0)") |> to_address_expr()
-    to_ = Map.get(kv, "to", "address(0)") |> to_address_expr()
-    amount = Map.get(kv, "amount", "0") |> to_uint_expr()
+  # For Solidity backend, we don't actually call tokens—just record intent.
+  defp compile_effect(_c, %Eff{op: :transfer, args: args}) when is_map(args) do
+    asset = Map.get(args, "asset", "0x0000000000000000000000000000000000000000")
+    from_ = Map.get(args, "from", "0x0000000000000000000000000000000000000000")
+    to_ = Map.get(args, "to", "0x0000000000000000000000000000000000000000")
+    amount = Map.get(args, "amount", 0)
 
-    "    emit TransferNote(" <>
-      lit(asset) <> ", " <> from_ <> ", " <> to_ <> ", " <> amount <> ");\n"
+    [
+      "    emit TransferNote(",
+      solidity_addr_for_event(asset),
+      ", ",
+      solidity_addr_for_event(from_),
+      ", ",
+      solidity_addr_for_event(to_),
+      ", ",
+      lit(amount),
+      ");\n"
+    ]
+    |> IO.iodata_to_binary()
   end
 
-  defp to_asset_string(s) when is_binary(s), do: s
-  defp to_asset_string({:raw, s}), do: s
-  defp to_asset_string(other), do: inspect(other)
+  # ------------------------------- helpers -----------------------------------
 
-  defp to_address_expr(<<"0x", _::binary>> = a), do: a
-  defp to_address_expr(id) when is_binary(id), do: id
-  defp to_address_expr({:raw, id}), do: id
-  defp to_address_expr(_), do: "address(0)"
+  defp indent(text, spaces) when is_binary(text) do
+    pad = String.duplicate(" ", spaces)
 
-  defp to_uint_expr(i) when is_integer(i), do: Integer.to_string(i)
-  defp to_uint_expr({:raw, s}), do: s
-  defp to_uint_expr(s) when is_binary(s), do: s
-  defp to_uint_expr(_), do: "0"
-
-  # ---- helpers --------------------------------------------------------------
-
-  defp indent(s, n) do
-    pad = String.duplicate(" ", n)
-
-    s
+    text
     |> String.split("\n", trim: false)
-    |> Enum.map_join("\n", fn
+    |> Enum.map(fn
       "" -> ""
       line -> pad <> line
     end)
-    |> String.trim_leading()
+    |> Enum.join("\n")
   end
 
+  # Literal rendering for Solidity source
   defp lit(true), do: "true"
   defp lit(false), do: "false"
   defp lit(i) when is_integer(i), do: Integer.to_string(i)
   defp lit(<<"0x", _::binary>> = a), do: a
-  defp lit({:raw, s}), do: s
-  # sentinel; extend to real Option encoding
-  defp lit({:some, _v}), do: "true"
+  defp lit({:raw, s}) when is_binary(s), do: s
+  defp lit({:some, _}), do: "true"
   defp lit(:none), do: "false"
+  defp lit(s) when is_binary(s), do: "\"" <> String.replace(s, "\"", "\\\"") <> "\""
+  defp lit(other), do: "\"" <> String.replace(inspect(other), "\"", "\\\"") <> "\""
 
-  defp lit(s) when is_binary(s) do
-    "\"" <> String.replace(s, "\"", "\\\"") <> "\""
-  end
-
-  defp lit(other), do: "\"" <> inspect(other) <> "\""
+  # For events, we need valid Solidity expressions for addresses
+  defp solidity_addr_for_event(<<"0x", _::binary>> = a), do: a
+  defp solidity_addr_for_event({:raw, s}) when is_binary(s), do: s
+  defp solidity_addr_for_event(other) when is_binary(other), do: solidity_addr(other)
+  defp solidity_addr_for_event(_), do: "address(0)"
 end

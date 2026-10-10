@@ -1,0 +1,24 @@
+[
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "typing.no-typechecker",
+    "title": "No type checker is implemented",
+    "category": "typing",
+    "tags": [
+      "types",
+      "spec-gap"
+    ],
+    "source_ref": "docs/quick-introduction.md#3",
+    "rationale": "The introduction sketches Hindley-Milner rules. The compiler has no type checker, so those rules are not compatibility requirements yet.",
+    "origin": "logos_spec",
+    "implementation_status": "spec_gap",
+    "phases": [
+      "parse"
+    ],
+    "note": "SPEC_GAP: unknown names, amount-versus-address, and negative-to-unsigned checks are not implemented. Do not treat zero-substitution as the type system.",
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\n"
+  }
+]

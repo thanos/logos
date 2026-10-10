@@ -1,0 +1,283 @@
+[
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "abi.keccak-empty",
+    "title": "Empty Keccak-256 digest",
+    "category": "abi",
+    "tags": [
+      "keccak"
+    ],
+    "source_ref": "ethereum",
+    "rationale": "Ethereum Keccak-256 of the empty string.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "keccak"
+    ],
+    "keccak_input": "",
+    "expect": {
+      "keccak": {
+        "status": "ok",
+        "hex": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "sha3_hex": "0xa7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "abi.selector-transfer",
+    "title": "transfer(address,uint256) selector",
+    "category": "abi",
+    "tags": [
+      "keccak",
+      "abi"
+    ],
+    "source_ref": "ethereum",
+    "rationale": "Canonical selector a9059cbb.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "keccak"
+    ],
+    "keccak_input": "transfer(address,uint256)",
+    "signature": "transfer(address,uint256)",
+    "expect": {
+      "keccak": {
+        "selector": "0xa9059cbb"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "abi.selector-transfer-from",
+    "title": "transferFrom selector",
+    "category": "abi",
+    "tags": [
+      "keccak",
+      "abi"
+    ],
+    "source_ref": "ethereum",
+    "rationale": "Canonical selector 23b872dd.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "keccak"
+    ],
+    "keccak_input": "transferFrom(address,address,uint256)",
+    "signature": "transferFrom(address,address,uint256)",
+    "expect": {
+      "keccak": {
+        "selector": "0x23b872dd"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "abi.selector-balance-of",
+    "title": "balanceOf selector",
+    "category": "abi",
+    "tags": [
+      "keccak",
+      "abi"
+    ],
+    "source_ref": "ethereum",
+    "rationale": "Canonical selector 70a08231.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "keccak"
+    ],
+    "keccak_input": "balanceOf(address)",
+    "signature": "balanceOf(address)",
+    "expect": {
+      "keccak": {
+        "selector": "0x70a08231"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "abi.transfer-from-encoding",
+    "title": "transferFrom calldata is 100 bytes",
+    "category": "abi",
+    "tags": [
+      "abi"
+    ],
+    "source_ref": "ethereum",
+    "rationale": "Selector at byte 0 and words at offsets 4, 36, and 68. Not 32, 64, 96.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "abi"
+    ],
+    "abi_kind": "transfer_from",
+    "from": "0x1111111111111111111111111111111111111111",
+    "to": "0x2222222222222222222222222222222222222222",
+    "amount": "1",
+    "expect": {
+      "abi": {
+        "status": "ok",
+        "byte_size": "100",
+        "hex": "0x23b872dd000000000000000000000000111111111111111111111111111111111111111100000000000000000000000022222222222222222222222222222222222222220000000000000000000000000000000000000000000000000000000000000001"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "abi.bool-words",
+    "title": "Only canonical bool words 0 and 1 are valid",
+    "category": "abi",
+    "tags": [
+      "abi"
+    ],
+    "source_ref": "ethereum",
+    "rationale": "A word equal to 2 is not true.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "abi"
+    ],
+    "abi_kind": "bool_word",
+    "value": "dirty",
+    "expect": {
+      "abi": {
+        "status": "ok",
+        "valid": false,
+        "byte_size": "32"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "abi.dirty-address",
+    "title": "High address bits are not a clean address word",
+    "category": "abi",
+    "tags": [
+      "abi"
+    ],
+    "source_ref": "ethereum",
+    "rationale": "An address word must be zero in the top 12 bytes.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "abi"
+    ],
+    "abi_kind": "address_word",
+    "value": "dirty",
+    "expect": {
+      "abi": {
+        "status": "ok",
+        "clean": false
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "abi.calldata-short",
+    "title": "99-byte transferFrom calldata is truncated",
+    "category": "abi",
+    "tags": [
+      "abi"
+    ],
+    "source_ref": "ethereum",
+    "rationale": "4 + 3*32 = 100. One byte less is incomplete.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "abi"
+    ],
+    "abi_kind": "calldata_bounds",
+    "byte_size": 99,
+    "args": 3,
+    "expect": {
+      "abi": {
+        "status": "ok",
+        "complete": false
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "abi.calldata-exact",
+    "title": "100-byte transferFrom calldata is complete",
+    "category": "abi",
+    "tags": [
+      "abi"
+    ],
+    "source_ref": "ethereum",
+    "rationale": "The static minimum is accepted by the oracle.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "abi"
+    ],
+    "abi_kind": "calldata_bounds",
+    "byte_size": 100,
+    "args": 3,
+    "expect": {
+      "abi": {
+        "status": "ok",
+        "complete": true
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "abi.compiler-selector-keccak",
+    "title": "Compiler selectors are Keccak-256",
+    "category": "abi",
+    "tags": [
+      "evm",
+      "keccak"
+    ],
+    "source_ref": "ethereum",
+    "rationale": "Release(address,uint256) in compiler output must be the Keccak selector, not SHA3-256.",
+    "origin": "ethereum_standard",
+    "implementation_status": "blocked",
+    "known_failure_id": "KF-EVM-SHA3",
+    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "phases": [
+      "evm"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause Release(to: Address, amount: Int): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\n",
+    "expect": {
+      "evm": {
+        "status": "ok",
+        "contains": [
+          "f6334794"
+        ]
+      }
+    },
+    "note": "f6334794 is Keccak-256 of Release(address,uint256). NIST SHA3-256 is a different prefix."
+  }
+]

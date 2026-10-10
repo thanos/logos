@@ -1,0 +1,64 @@
+[
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "security.parser-atoms",
+    "title": "Parser does not allocate atoms for fresh identifiers",
+    "category": "security",
+    "tags": [
+      "parser",
+      "atoms"
+    ],
+    "source_ref": "lib/parser.ex",
+    "rationale": "Repeated unique contracts must not grow the atom table from the parser.",
+    "origin": "logos_spec",
+    "implementation_status": "passes",
+    "phases": [
+      "atoms"
+    ],
+    "atom_target": "parser",
+    "expect": {
+      "atoms": {
+        "status": "ok",
+        "growth": "0"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "security.evm-atoms",
+    "title": "EVM compile does not allocate atoms from clause names",
+    "category": "security",
+    "tags": [
+      "evm",
+      "atoms"
+    ],
+    "source_ref": "lib/codegen/evm.ex",
+    "rationale": "String.to_atom on clause names and uniq/1 grow the atom table.",
+    "origin": "logos_spec",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-EVM-TO-ATOM",
+    "phases": [
+      "atoms"
+    ],
+    "atom_target": "evm",
+    "timeout_ms": 2000,
+    "expect": {
+      "atoms": {
+        "status": "ok",
+        "growth": "0"
+      }
+    },
+    "observed": {
+      "atoms": {
+        "status": "ok",
+        "min_growth": "1"
+      }
+    }
+  }
+]

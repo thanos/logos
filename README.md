@@ -198,3 +198,9 @@ provider.on({
   topics: [sig, ev]
 }, (log) => console.log("Submitted event log:", log));
 ```
+
+## Conformance
+
+`mix test` is the smoke gate. It locks current Elixir behavior, including known defects, and stays green when Anvil or `solc` is absent. The full corpus is `scripts/run_conformance.sh`. That command exits non-zero when a case that needs Anvil or `solc` was not executed.
+
+The compile API is `Logos.Compiler.compile_to_evm/1`. `Logos.CompilerEVM.compile_to_evm/1` is not defined.
