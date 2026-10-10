@@ -3,7 +3,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "evm.push0-runtime-deploys",
     "title": "Hand-assembled PUSH0 creation deploys its runtime",
     "category": "evm",
@@ -31,7 +31,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "evm.ledger-transfer",
     "title": "Ledger token moves balances only with allowance",
     "category": "evm",
@@ -62,7 +62,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "evm.token-true",
     "title": "Token returning true",
     "category": "evm",
@@ -90,7 +90,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "evm.token-false",
     "title": "Token returning false does not revert by itself",
     "category": "evm",
@@ -118,7 +118,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "evm.token-empty",
     "title": "Token returning no data",
     "category": "evm",
@@ -146,7 +146,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "evm.token-revert",
     "title": "Token revert is visible to the caller",
     "category": "evm",
@@ -174,7 +174,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "evm.token-one-byte",
     "title": "One-byte return is not a bool word",
     "category": "evm",
@@ -202,7 +202,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "evm.token-thirty-one",
     "title": "31-byte return is short",
     "category": "evm",
@@ -229,7 +229,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "evm.token-thirty-three",
     "title": "33-byte return is long",
     "category": "evm",
@@ -256,7 +256,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "evm.token-dirty-bool",
     "title": "Noncanonical bool word is returned as 2",
     "category": "evm",
@@ -286,7 +286,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "evm.eoa-call",
     "title": "EOA CALL success is not a transfer",
     "category": "evm",
@@ -314,7 +314,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P1",
-    "class": "spec",
+    "class": "parity",
     "id": "evm.reenter",
     "title": "Adversarial token can callback",
     "category": "evm",
@@ -358,5 +358,95 @@
     ],
     "note": "SPEC_GAP: do not treat empty return as specified Logos behavior. The anvil fixture records the raw empty payload separately.",
     "scenario": "token_empty"
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "parity",
+    "id": "evm.ledger-zero-amount",
+    "title": "Zero amount transferFrom reverts",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "erc20"
+    ],
+    "source_ref": "EIP-20",
+    "rationale": "Amount 0 is rejected and the balance stays 1000.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "ledger_zero_amount",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "reverted": true,
+        "balance_before": "1000",
+        "balance_after": "1000",
+        "message_contains": "zero amount"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "parity",
+    "id": "evm.ledger-insufficient-allowance",
+    "title": "Insufficient allowance reverts",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "erc20"
+    ],
+    "source_ref": "EIP-20",
+    "rationale": "approve of 1 cannot transfer 50. The balance stays 1000.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "ledger_insufficient_allowance",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "reverted": true,
+        "balance_before": "1000",
+        "balance_after": "1000",
+        "message_contains": "allowance"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "parity",
+    "id": "evm.ledger-insufficient-balance",
+    "title": "Insufficient balance reverts",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "erc20"
+    ],
+    "source_ref": "EIP-20",
+    "rationale": "An allowance above the balance still cannot move 1001. The balance stays 1000.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "ledger_insufficient_balance",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "reverted": true,
+        "balance_before": "1000",
+        "balance_after": "1000",
+        "message_contains": "balance"
+      }
+    }
   }
 ]

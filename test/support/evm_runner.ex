@@ -74,6 +74,18 @@ defmodule Logos.Conformance.EVMRunner do
     end
   end
 
+  defp execute("ledger_zero_amount", url, from) do
+    ledger_rejected(url, from, 50, 0)
+  end
+
+  defp execute("ledger_insufficient_allowance", url, from) do
+    ledger_rejected(url, from, 1, 50)
+  end
+
+  defp execute("ledger_insufficient_balance", url, from) do
+    ledger_rejected(url, from, 5_000, 1_001)
+  end
+
   defp execute("token_" <> kind, url, from) do
     contract = token_contract(kind)
 
@@ -111,11 +123,15 @@ defmodule Logos.Conformance.EVMRunner do
          {:ok, address} <- deploy(url, from, bin!(bins, "C")),
          {:ok, receipt} <- transact(url, from, address, ABI.selector("B()")),
          {:ok, stored} <- call(url, from, address, ABI.selector("x()")) do
+      logs = receipt["logs"] || []
+
       %{
         "status" => "ok",
         "storage_x" => word_decimal(stored),
         "gas_used" => word_decimal(receipt["gasUsed"]),
-        "bytecode_bytes" => Integer.to_string(byte_size(bin!(bins, "C")))
+        "bytecode_bytes" => Integer.to_string(byte_size(bin!(bins, "C"))),
+        "log_count" => Integer.to_string(length(logs)),
+        "topic0" => topic0(logs)
       }
     else
       {:error, reason} -> %{"status" => "error", "message" => inspect(reason)}
@@ -144,6 +160,31 @@ defmodule Logos.Conformance.EVMRunner do
       {:error, reason} -> %{"status" => "error", "message" => inspect(reason)}
     end
   end
+
+  defp ledger_rejected(url, from, allowance, amount) do
+    with {:ok, bins} <- compile_fixtures(),
+         {:ok, token} <- deploy(url, from, bin!(bins, "LedgerToken")),
+         {:ok, [_, recipient | _]} <- rpc(url, "eth_accounts", []),
+         {:ok, _} <- transact(url, from, token, encode_approve(from, allowance)),
+         before <- balance_of(url, from, token, from),
+         {:error, message} <-
+           call(url, from, token, ABI.encode_transfer_from(from, recipient, amount)),
+         after_bal <- balance_of(url, from, token, from) do
+      %{
+        "status" => "ok",
+        "reverted" => true,
+        "balance_before" => before,
+        "balance_after" => after_bal,
+        "revert_message" => message
+      }
+    else
+      {:ok, data} -> %{"status" => "error", "message" => "expected revert, got #{data}"}
+      {:error, reason} -> %{"status" => "error", "message" => inspect(reason)}
+    end
+  end
+
+  defp topic0([%{"topics" => [first | _]} | _]), do: String.downcase(first)
+  defp topic0(_), do: "0x"
 
   defp token_contract("true"), do: "TokenTrue"
   defp token_contract("false"), do: "TokenFalse"

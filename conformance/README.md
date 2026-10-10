@@ -6,6 +6,6 @@ Three classes stay separate:
 
 - `current` locks today's behavior, including bugs.
 - `spec` states Ethereum and `docs/quick-introduction.md`. A miss stays red through the registry.
-- `parity` is the same JSON, for a future Rust runner. This tree does not contain a Rust crate.
+- `parity` marks the vectors a future Rust runner must match exactly: Yellow Paper opcodes, ABI words, Keccak, and the independent Anvil token doubles. Those cases have no `known_failure_id`. This tree does not contain a Rust crate.
 
 `mix test` is the smoke gate. `scripts/run_conformance.sh` fails when Anvil or solc cases were `NOT_RUN`.

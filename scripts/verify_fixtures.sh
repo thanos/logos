@@ -4,7 +4,11 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 
-python3 - << 'PY'
+py=python3
+if ! python3 -c 'import hashlib' >/dev/null 2>&1; then
+  py=/usr/bin/python3
+fi
+"$py" - << 'PY'
 import hashlib, pathlib, sys
 root = pathlib.Path("conformance")
 lines = []

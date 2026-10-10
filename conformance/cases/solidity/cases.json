@@ -164,7 +164,7 @@
       "anvil"
     ],
     "source_ref": "lib/codegen/solidity.ex",
-    "rationale": "The small Set/Emit contract is compiled with pinned solc and executed. Gas and bytecode layout are reported and are not required to match a reference.",
+    "rationale": "The small Set/Emit contract is compiled with pinned solc and executed. Storage, the Emitted topic, gas, and bytecode size are recorded. Gas and bytecode are not required to match a reference.",
     "origin": "logos_spec",
     "implementation_status": "passes",
     "phases": [
@@ -175,7 +175,9 @@
     "expect": {
       "anvil": {
         "status": "ok",
-        "storage_x": "1"
+        "storage_x": "1",
+        "log_count": "1",
+        "topic0": "0x552ef73d705393dfadd2aef9cf62ca18e26f26c519bd5ce978866e6e944a1c06"
       }
     }
   }

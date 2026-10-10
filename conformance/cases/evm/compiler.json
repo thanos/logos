@@ -51,6 +51,10 @@
     "expect": {
       "evm": {
         "status": "error"
+      },
+      "execute": {
+        "outcome": "diagnostic",
+        "forbids": "push0_substitution"
       }
     },
     "note": "Latent: parse_term pushes 0. Blocked until the header assembles."
@@ -81,6 +85,11 @@
     "expect": {
       "evm": {
         "status": "ok"
+      },
+      "execute": {
+        "outcome": "success",
+        "token_balance_moved": true,
+        "also_blocked_by": "escrow_syntax"
       }
     },
     "observed": {
@@ -118,6 +127,11 @@
     "expect": {
       "evm": {
         "status": "ok"
+      },
+      "execute": {
+        "outcome": "revert",
+        "storage_unchanged": true,
+        "balance_unchanged": true
       }
     },
     "observed": {
@@ -155,6 +169,10 @@
     "expect": {
       "evm": {
         "status": "ok"
+      },
+      "execute": {
+        "outcome": "success",
+        "storage_unchanged": false
       }
     },
     "observed": {
@@ -192,6 +210,11 @@
     "expect": {
       "evm": {
         "status": "ok"
+      },
+      "execute": {
+        "outcome": "revert",
+        "second_call": "revert",
+        "duplicate_transfer": false
       }
     },
     "observed": {
@@ -229,6 +252,11 @@
     "expect": {
       "evm": {
         "status": "ok"
+      },
+      "execute": {
+        "outcome": "revert",
+        "storage_unchanged": true,
+        "normative_fragment": "asm.calldata-guard"
       }
     },
     "observed": {
@@ -266,6 +294,12 @@
     "expect": {
       "evm": {
         "status": "ok"
+      },
+      "execute": {
+        "outcome": "success",
+        "selector_count": "3",
+        "unknown_selector": "revert",
+        "normative_fragment": "asm.dispatch-dup"
       }
     },
     "observed": {
@@ -303,6 +337,10 @@
     "expect": {
       "evm": {
         "status": "ok"
+      },
+      "execute": {
+        "outcome": "revert",
+        "rolled_back": true
       }
     },
     "observed": {
@@ -340,6 +378,10 @@
     "expect": {
       "evm": {
         "status": "ok"
+      },
+      "execute": {
+        "outcome": "revert",
+        "rolled_back": true
       }
     },
     "observed": {
@@ -377,6 +419,11 @@
     "expect": {
       "evm": {
         "status": "ok"
+      },
+      "execute": {
+        "outcome": "revert",
+        "silent_success": false,
+        "normative_fragment": "asm.returndata-width"
       }
     },
     "observed": {
@@ -414,6 +461,11 @@
     "expect": {
       "evm": {
         "status": "ok"
+      },
+      "execute": {
+        "outcome": "revert",
+        "rolled_back": true,
+        "normative_fragment": "asm.call-order"
       }
     },
     "observed": {
@@ -451,6 +503,10 @@
     "expect": {
       "evm": {
         "status": "ok"
+      },
+      "execute": {
+        "outcome": "success",
+        "runtime_equals_deployed_code": true
       }
     },
     "observed": {
@@ -488,6 +544,11 @@
     "expect": {
       "evm": {
         "status": "ok"
+      },
+      "execute": {
+        "outcome": "success",
+        "logs_match_solidity": true,
+        "storage_matches_solidity": true
       }
     },
     "observed": {

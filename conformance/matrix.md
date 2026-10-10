@@ -23,5 +23,5 @@ Status is what the Elixir compiler does at baseline `ae7c13355b50db6d74a1837925e
 | Term | stored as raw text | raw | not enforced | not enforced | absent |
 | Duration, now | raw predicate text | raw | pasted through | `sec/2` multipliers exist and are unreached | BLOCKED |
 | Type checking | no checker | names stay strings | n/a | unknown names become `PUSH 0` once assembly runs | `SPEC_GAP` |
-| Assembler `assemble/1` | n/a | n/a | n/a | PUSH and opcodes work; jumps hang in `left_pad/2` | hand-built `PUSH0` creation deploys |
-| ERC-20 doubles | n/a | n/a | compiled with solc, not Logos | n/a | executed when solc and Anvil are installed |
+| Assembler `assemble/1` | n/a | n/a | n/a | every `@opcode_map` byte is a parity case; jumps, including JUMPDEST at 255 and 256, hang in `left_pad/2` | hand-built `PUSH0` creation deploys |
+| ERC-20 doubles | n/a | n/a | compiled with solc, not Logos | n/a | true/false/empty/revert/short/long/dirty returns, zero amount, insufficient allowance and balance, EOA call, callback, and the Set/Emit log |

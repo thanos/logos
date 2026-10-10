@@ -39,9 +39,11 @@ Every fixture's `baseline_commit` is the HEAD above. The hashes are the dirty co
 
 | Status | Count |
 | --- | --- |
-| PASS | 57 |
-| KNOWN_FAILURE | 21 |
+| PASS | 65 |
+| KNOWN_FAILURE | 24 |
 | BLOCKED | 14 |
 | SKIPPED | 6 |
+
+A later run with solc 0.8.28 and Anvil on `PATH` is the source of these counts. `class` is `parity` on 50 cases, `spec` on 48, and `current` on 11.
 
 `scripts/collect_baseline.sh` prints the commit, versions, and these exit codes.

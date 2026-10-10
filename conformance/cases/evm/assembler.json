@@ -3,7 +3,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.opcode-stop",
     "title": "STOP assembles to 0x00",
     "rationale": "STOP is in the assembler table and must keep its Yellow Paper opcode.",
@@ -34,7 +34,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.opcode-add",
     "title": "ADD assembles to 0x01",
     "rationale": "ADD is in the assembler table and must keep its Yellow Paper opcode.",
@@ -65,7 +65,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.opcode-push0",
     "title": "PUSH0 assembles to 0x5f",
     "rationale": "PUSH0 is in the assembler table and must keep its Yellow Paper opcode.",
@@ -96,7 +96,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.opcode-push1",
     "title": "PUSH1 assembles to 0x60",
     "rationale": "PUSH1 is in the assembler table and must keep its Yellow Paper opcode.",
@@ -127,7 +127,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.opcode-jumpdest",
     "title": "JUMPDEST assembles to 0x5b",
     "rationale": "JUMPDEST is in the assembler table and must keep its Yellow Paper opcode.",
@@ -158,7 +158,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.opcode-jump",
     "title": "JUMP assembles to 0x56",
     "rationale": "JUMP is in the assembler table and must keep its Yellow Paper opcode.",
@@ -189,7 +189,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.opcode-jumpi",
     "title": "JUMPI assembles to 0x57",
     "rationale": "JUMPI is in the assembler table and must keep its Yellow Paper opcode.",
@@ -220,7 +220,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.opcode-timestamp",
     "title": "TIMESTAMP assembles to 0x42",
     "rationale": "TIMESTAMP is in the assembler table and must keep its Yellow Paper opcode.",
@@ -251,7 +251,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.opcode-call",
     "title": "CALL assembles to 0xf1",
     "rationale": "CALL is in the assembler table and must keep its Yellow Paper opcode.",
@@ -282,7 +282,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.opcode-revert",
     "title": "REVERT assembles to 0xfd",
     "rationale": "REVERT is in the assembler table and must keep its Yellow Paper opcode.",
@@ -313,7 +313,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.opcode-log2",
     "title": "LOG2 assembles to 0xa2",
     "rationale": "LOG2 is in the assembler table and must keep its Yellow Paper opcode.",
@@ -344,7 +344,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.opcode-sstore",
     "title": "SSTORE assembles to 0x55",
     "rationale": "SSTORE is in the assembler table and must keep its Yellow Paper opcode.",
@@ -375,7 +375,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.push0-via-zero",
     "title": "push_u 0 is PUSH0",
     "rationale": "Shanghai allows PUSH0. The assembler selects it for zero.",
@@ -405,7 +405,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.push-boundaries",
     "title": "PUSH width boundaries",
     "rationale": "1 and 255 are PUSH1, 256 and 65535 are PUSH2, 65536 is PUSH3.",
@@ -435,7 +435,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.push-256",
     "title": "256 is PUSH2",
     "rationale": "256 does not fit in PUSH1.",
@@ -465,7 +465,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.push-65535",
     "title": "65535 is PUSH2",
     "rationale": "The PUSH2 maximum.",
@@ -495,7 +495,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.push-65536",
     "title": "65536 is PUSH3",
     "rationale": "65536 crosses the PUSH2 boundary.",
@@ -525,7 +525,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.push-uint256-max",
     "title": "2^256-1 is PUSH32",
     "rationale": "The largest unsigned 256-bit immediate is 33 bytes with opcode 0x7f.",
@@ -558,7 +558,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.push-negative",
     "title": "Negative push is rejected",
     "rationale": "PUSH immediates are unsigned unless a future spec says otherwise.",
@@ -627,7 +627,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.raw-byte",
     "title": "A raw byte after PUSH1 is rejected",
     "rationale": "Loose immediates desynchronize later passes. Rejection is the normative result.",
@@ -661,7 +661,7 @@
     "fixture_version": 1,
     "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
     "priority": "P0",
-    "class": "spec",
+    "class": "parity",
     "id": "asm.unknown-shr",
     "title": "SHR is reported as an unknown opcode",
     "rationale": "The codegen emits SHR, but the assembler must not invent a byte for an unlisted opcode.",
@@ -957,5 +957,1963 @@
     "phases": [
       "assemble"
     ]
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "category": "evm",
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ],
+    "tags": [
+      "assembler"
+    ],
+    "class": "parity",
+    "id": "asm.opcode-map",
+    "title": "Every assembler opcode keeps its Yellow Paper byte",
+    "rationale": "One vector covers each atom in @opcode_map. A wrong or missing byte fails this case.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "ADD"
+      },
+      {
+        "op": "MUL"
+      },
+      {
+        "op": "SUB"
+      },
+      {
+        "op": "DIV"
+      },
+      {
+        "op": "LT"
+      },
+      {
+        "op": "GT"
+      },
+      {
+        "op": "EQ"
+      },
+      {
+        "op": "ISZERO"
+      },
+      {
+        "op": "AND"
+      },
+      {
+        "op": "OR"
+      },
+      {
+        "op": "NOT"
+      },
+      {
+        "op": "CALLDATALOAD"
+      },
+      {
+        "op": "CALLDATASIZE"
+      },
+      {
+        "op": "CALLDATACOPY"
+      },
+      {
+        "op": "CODECOPY"
+      },
+      {
+        "op": "RETURNDATASIZE"
+      },
+      {
+        "op": "RETURNDATACOPY"
+      },
+      {
+        "op": "BLOCKHASH"
+      },
+      {
+        "op": "TIMESTAMP"
+      },
+      {
+        "op": "NUMBER"
+      },
+      {
+        "op": "POP"
+      },
+      {
+        "op": "MLOAD"
+      },
+      {
+        "op": "MSTORE"
+      },
+      {
+        "op": "SLOAD"
+      },
+      {
+        "op": "SSTORE"
+      },
+      {
+        "op": "JUMP"
+      },
+      {
+        "op": "JUMPI"
+      },
+      {
+        "op": "JUMPDEST"
+      },
+      {
+        "op": "PUSH0"
+      },
+      {
+        "op": "PUSH1"
+      },
+      {
+        "op": "DUP1"
+      },
+      {
+        "op": "DUP2"
+      },
+      {
+        "op": "SWAP1"
+      },
+      {
+        "op": "LOG0"
+      },
+      {
+        "op": "LOG1"
+      },
+      {
+        "op": "LOG2"
+      },
+      {
+        "op": "CALL"
+      },
+      {
+        "op": "REVERT"
+      },
+      {
+        "op": "INVALID"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x000102030410111415161719353637393d3e404243505152545556575b5f60808190a0a1a2f1fdfe",
+        "byte_size": "40"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "category": "evm",
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ],
+    "tags": [
+      "assembler"
+    ],
+    "class": "parity",
+    "id": "asm.dispatch-dup",
+    "title": "Dispatcher compares a duplicated selector",
+    "rationale": "PUSH selector, DUP1, then compare to the first calldata word. Dropping DUP1 consumes the selector.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "push_u": "1"
+      },
+      {
+        "op": "DUP1"
+      },
+      {
+        "op": "PUSH0"
+      },
+      {
+        "op": "CALLDATALOAD"
+      },
+      {
+        "op": "EQ"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x6001805f3514",
+        "byte_size": "6"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "category": "evm",
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ],
+    "tags": [
+      "assembler"
+    ],
+    "class": "parity",
+    "id": "asm.calldata-guard",
+    "title": "Calldata shorter than a selector is the failure condition",
+    "rationale": "CALLDATASIZE, PUSH1 4, LT. A true result must revert before dispatch.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "CALLDATASIZE"
+      },
+      {
+        "push_u": "4"
+      },
+      {
+        "op": "LT"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x36600410",
+        "byte_size": "4"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "category": "evm",
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ],
+    "tags": [
+      "assembler"
+    ],
+    "class": "parity",
+    "id": "asm.call-order",
+    "title": "CALL arguments are pushed then CALL",
+    "rationale": "Seven stack items then CALL: gas, address, value, args offset, args size, ret offset, ret size. GAS and PUSH20 are the production forms; this vector locks the order with opcodes the assembler already accepts.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "PUSH0"
+      },
+      {
+        "op": "PUSH0"
+      },
+      {
+        "op": "PUSH0"
+      },
+      {
+        "op": "PUSH0"
+      },
+      {
+        "push_u": "100"
+      },
+      {
+        "op": "PUSH0"
+      },
+      {
+        "push_u": "32"
+      },
+      {
+        "op": "CALL"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x5f5f5f5f60645f6020f1",
+        "byte_size": "10"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "category": "evm",
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ],
+    "tags": [
+      "assembler"
+    ],
+    "class": "parity",
+    "id": "asm.returndata-width",
+    "title": "Return data shorter than a word is the failure condition",
+    "rationale": "RETURNDATASIZE, PUSH1 32, LT. A true result is not a successful ERC-20 return.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "instructions": [
+      {
+        "op": "RETURNDATASIZE"
+      },
+      {
+        "push_u": "32"
+      },
+      {
+        "op": "LT"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x3d602010",
+        "byte_size": "4"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "category": "evm",
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ],
+    "tags": [
+      "assembler"
+    ],
+    "class": "spec",
+    "id": "asm.jumpdest-at-255",
+    "title": "Forward jump lands on JUMPDEST at PC 255",
+    "rationale": "Address 255 still fits in PUSH1. Pass 1 and pass 2 must agree, and byte 255 must be JUMPDEST.",
+    "origin": "ethereum_standard",
+    "implementation_status": "known_failure",
+    "instructions": [
+      {
+        "push_u": "255"
+      },
+      {
+        "jump_label": "DEST"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "label": "DEST"
+      },
+      {
+        "op": "STOP"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x60ff60ff56000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005b00",
+        "byte_size": "257"
+      }
+    },
+    "known_failure_id": "KF-ASM-LEFT-PAD",
+    "timeout_ms": 800,
+    "observed": {
+      "assemble": {
+        "status": "timeout"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "category": "evm",
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ],
+    "tags": [
+      "assembler"
+    ],
+    "class": "spec",
+    "id": "asm.jumpdest-at-256",
+    "title": "Forward jump lands on JUMPDEST at PC 256",
+    "rationale": "Address 256 requires PUSH2. The recorded PC must be 256, not the pass-1 estimate.",
+    "origin": "ethereum_standard",
+    "implementation_status": "known_failure",
+    "instructions": [
+      {
+        "push_u": "1"
+      },
+      {
+        "jump_label": "DEST"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "label": "DEST"
+      },
+      {
+        "op": "STOP"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x600161010056000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005b00",
+        "byte_size": "258"
+      }
+    },
+    "known_failure_id": "KF-ASM-LEFT-PAD",
+    "timeout_ms": 800,
+    "observed": {
+      "assemble": {
+        "status": "timeout"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "category": "evm",
+    "source_ref": "lib/codegen/evm/assembler.ex",
+    "phases": [
+      "assemble"
+    ],
+    "tags": [
+      "assembler"
+    ],
+    "class": "spec",
+    "id": "asm.jump-backward",
+    "title": "Backward jump targets an earlier JUMPDEST",
+    "rationale": "The label is behind the jump. The assembled immediate is that earlier PC.",
+    "origin": "ethereum_standard",
+    "implementation_status": "known_failure",
+    "instructions": [
+      {
+        "label": "BACK"
+      },
+      {
+        "op": "STOP"
+      },
+      {
+        "push_u": "0"
+      },
+      {
+        "jump_label": "BACK"
+      }
+    ],
+    "expect": {
+      "assemble": {
+        "status": "ok",
+        "hex": "0x5b005f600056",
+        "byte_size": "6"
+      }
+    },
+    "known_failure_id": "KF-ASM-LEFT-PAD",
+    "timeout_ms": 800,
+    "observed": {
+      "assemble": {
+        "status": "timeout"
+      }
+    }
   }
 ]
