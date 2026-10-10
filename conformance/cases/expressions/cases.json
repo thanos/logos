@@ -1,0 +1,24 @@
+[
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "expressions.duration-table",
+    "title": "Duration units are seconds",
+    "category": "expressions",
+    "tags": [
+      "time",
+      "spec-gap"
+    ],
+    "source_ref": "lib/codegen/evm.ex",
+    "rationale": "The EVM folder documents s=1, m=60, h=3600, d=86400, w=604800. Solidity does not apply that table. Empty-return token policy is separate.",
+    "origin": "logos_spec",
+    "implementation_status": "spec_gap",
+    "phases": [
+      "parse"
+    ],
+    "note": "SPEC_GAP for Solidity lowering of now and Duration. The independent table is checked by the property test. EVM lowering is blocked by KF-EVM-UNKNOWN-SHR and inverted by KF-EVM-CMP-ORDER.",
+    "logos_source": "Contract C\nState\n  record { start_ts : Int = 1700000000 }\nClauses\n  Clause Release(): Effect\n    Provided That\n      now >= start_ts + Duration(\"7d\")\n    Shall\n      Set { field: \"start_ts\", value: 1 }\nEnd\n"
+  }
+]

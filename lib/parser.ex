@@ -1,7 +1,26 @@
 defmodule Logos.Parser do
-  @moduledoc false
+  @moduledoc """
+  Lightweight line-oriented parser for the legal-dialect DSL.
+
+  It recognizes sections (`Parties`, `Definitions`, `State`, `Clauses`, etc.),
+  clause blocks with `Provided That` / `Shall` / optional `Otherwise Remedies`,
+  and parses a minimal expression vocabulary for Effects.
+
+  The parser leaves many expressions as raw strings; backends are responsible
+  for predicate lowering and effect interpretation.
+  """
+
   alias Logos.AST.{Contract, Clause, Eff}
 
+  @doc """
+  Parse a DSL string into an AST Contract.
+
+  ## Examples
+
+      iex> dsl = "Contract C\\nState\\n  record { x : Int = 0 }\\nClauses\\n  Clause A(): Effect\\n    Provided That\\n      x == 0\\n    Shall\\n      Set { field: \\"x\\", value: 1 }\\nEnd"
+      iex> %Logos.AST.Contract{name: "C"} = Logos.Parser.parse(dsl)
+  """
+  @spec parse(String.t()) :: Contract.t()
   def parse(dsl) when is_binary(dsl) do
     lines =
       dsl
@@ -13,45 +32,56 @@ defmodule Logos.Parser do
     contract
   end
 
-  # -- big picture -------------------------------------------------------------
+  # ------------ contract & section utilities (internal) ----------------------
 
   defp parse_contract([<<"Contract ", rest::binary>> | tail]) do
     name = rest |> String.trim()
+
+    # Grab everything until "End" (don’t stop on blank lines)
     {sections, tail2} = collect_until(tail, "End")
-    {parties, s1} = take_section(sections, "Parties", &parse_parties/1)
-    {defs, s2} = take_section(s1, "Definitions", &parse_defs/1)
+
+    # --- Optional sections ---
+    {parties_block, s1} = extract_section_optional(sections, "Parties")
+
+    parties =
+      case parties_block do
+        nil -> %{}
+        block -> parse_parties(block)
+      end
+
+    {defs_block, s2} = extract_section_optional(s1, "Definitions")
+
+    defs =
+      case defs_block do
+        nil -> %{}
+        block -> parse_defs(block)
+      end
+
+    # --- Required sections ---
     {state, s3} = take_section(s2, "State", &parse_state/1)
     {clauses, s4} = take_section(s3, "Clauses", &parse_clauses/1)
+
+    # Optional tail sections
     {term, s5} = take_section_optional(s4, "Term", &parse_term/1)
     {law, s6} = take_section_optional(s5, "GoverningLaw", &parse_law/1)
     {sigs, _s7} = take_section_optional(s6, "Signatures", &parse_sigs/1)
 
-    contract = %Contract{
-      name: name,
-      parties: parties,
-      defs: defs,
-      state: state,
-      clauses: clauses,
-      term: term,
-      law: law,
-      signatures: sigs || []
-    }
-
-    {contract, tail2}
+    {%Logos.AST.Contract{
+       name: name,
+       parties: parties,
+       defs: defs,
+       state: state,
+       clauses: clauses,
+       term: term,
+       law: law,
+       signatures: sigs || []
+     }, tail2}
   end
 
-  defp parse_contract(_),
-    do: raise("Expected `Contract <Name>` at top of file")
-
-  # -- section plumbing --------------------------------------------------------
+  defp parse_contract(_), do: raise("Expected `Contract <Name>` at top of file")
 
   defp collect_until(lines, stop_token) do
-    {pre, post} =
-      Enum.split_while(lines, fn l ->
-        trimmed = String.trim(l)
-        trimmed != stop_token
-      end)
-
+    {pre, post} = Enum.split_while(lines, fn l -> String.trim(l) != stop_token end)
     {pre, post}
   end
 
@@ -68,10 +98,7 @@ defmodule Logos.Parser do
   end
 
   defp extract_section(lines, header) do
-    {pre, rest1} =
-      Enum.split_while(lines, fn l ->
-        String.trim(l) != header
-      end)
+    {pre, rest1} = Enum.split_while(lines, fn l -> String.trim(l) != header end)
 
     case rest1 do
       [] ->
@@ -91,36 +118,34 @@ defmodule Logos.Parser do
   end
 
   defp take_until_next_section(lines) do
-    {block, rest} =
-      Enum.split_while(lines, fn l ->
-        t = String.trim(l)
-        not (t == "" or section_header?(t))
-      end)
-
-    {block, rest}
+    Enum.split_while(lines, fn l ->
+      t = String.trim(l)
+      # Keep consuming until we hit the *next top-level section*,
+      # but DO NOT stop on blank lines.
+      not section_header?(t) and t != "End" and not String.starts_with?(t, "Contract ")
+    end)
   end
 
-  defp section_header?(t) do
-    t in [
-      "Parties",
-      "Definitions",
-      "Whereas",
-      "State",
-      "Clauses",
-      "Term",
-      "GoverningLaw",
-      "Signatures"
-    ]
-  end
+  defp section_header?(t),
+    do:
+      t in [
+        "Parties",
+        "Definitions",
+        "Whereas",
+        "State",
+        "Clauses",
+        "Term",
+        "GoverningLaw",
+        "Signatures"
+      ]
 
-  # -- sections ---------------------------------------------------------------
+  # ---------------------------- sections -------------------------------------
 
   defp parse_parties(lines) do
     lines
     |> Enum.map(&String.trim/1)
     |> Enum.reject(&(&1 == ""))
     |> Enum.map(fn l ->
-      # id : Party = 0xAbc... or Address("...") or string
       with [id, addr] <- l |> String.split(": Party =") |> Enum.map(&String.trim/1) do
         {id, parse_value(addr)}
       else
@@ -135,20 +160,15 @@ defmodule Logos.Parser do
     |> Enum.map(&String.trim/1)
     |> Enum.reject(&(&1 == ""))
     |> Enum.map(fn l ->
-      # let name : Type = expr
       case Regex.run(~r/^let\s+([a-zA-Z_]\w*)\s*:\s*([A-Za-z<>,\d_]+)\s*=\s*(.+)$/, l) do
-        [_, name, _type, expr] ->
-          {name, parse_value(expr)}
-
-        _ ->
-          raise("Bad Definitions line: `#{l}`")
+        [_, name, _type, expr] -> {name, parse_value(expr)}
+        _ -> raise("Bad Definitions line: `#{l}`")
       end
     end)
     |> Map.new()
   end
 
   defp parse_state(lines) do
-    # Expect "record { ... }" single line block or multi-line; merge and parse fields
     blob = Enum.join(lines, " ") |> String.replace(~r/\s+/, " ")
 
     case Regex.run(~r/record\s*\{\s*(.+)\s*\}/, blob) do
@@ -158,7 +178,6 @@ defmodule Logos.Parser do
         |> Enum.map(&String.trim/1)
         |> Enum.reject(&(&1 == ""))
         |> Enum.map(fn f ->
-          # name : Type = value
           case Regex.run(~r/^([a-zA-Z_]\w*)\s*:\s*[A-Za-z<>,\d_]+\s*=\s*(.+)$/, f) do
             [_, name, value] -> {name, parse_value(value)}
             _ -> raise("Bad State field: `#{f}`")
@@ -179,11 +198,7 @@ defmodule Logos.Parser do
   end
 
   defp parse_law(lines) do
-    # GoverningLaw "text"
-    txt =
-      lines
-      |> Enum.join(" ")
-      |> String.trim()
+    txt = lines |> Enum.join(" ") |> String.trim()
 
     case Regex.run(~r/^"(.+)"$/, txt) do
       [_, s] -> s
@@ -204,41 +219,40 @@ defmodule Logos.Parser do
   end
 
   defp parse_clauses(lines) do
-    # Break by "Clause <Name>(...): Effect"
-    chunks =
-      lines
-      |> chunk_by_clause_headers()
-
-    Enum.map(chunks, &parse_clause/1)
+    lines
+    |> chunk_by_clause_headers()
+    |> Enum.map(&parse_clause/1)
   end
 
-  defp chunk_by_clause_headers(lines) do
-    Enum.reduce(lines, {[], []}, fn line, {acc, cur} ->
-      case Regex.run(~r/^\s*Clause\s+([A-Za-z_]\w*)\s*\((.*?)\)\s*:\s*Effect\s*$/, line) do
-        nil ->
-          {acc, [line | cur]}
+  @clause_hdr ~r/^\s*Clause\s+[A-Za-z_]\w*\s*\(.*?\)\s*:\s*Effect\s*$/
+  defp clause_header?(line), do: Regex.match?(@clause_hdr, line)
 
-        [_m, _name, _params] ->
-          # start new chunk; push previous (if any)
-          acc =
+  defp chunk_by_clause_headers(lines) do
+    {acc, cur} =
+      Enum.reduce(lines, {[], []}, fn line, {acc, cur} ->
+        if clause_header?(line) do
+          acc2 =
             case cur do
               [] -> acc
               _ -> [Enum.reverse(cur) | acc]
             end
 
-          {acc, [line]}
-      end
-    end)
-    |> then(fn {acc, cur} ->
-      acc =
-        case cur do
-          [] -> acc
-          _ -> [Enum.reverse(cur) | acc]
+          {acc2, [line]}
+        else
+          {acc, [line | cur]}
         end
+      end)
 
-      Enum.reverse(acc)
-    end)
+    acc =
+      case cur do
+        [] -> acc
+        _ -> [Enum.reverse(cur) | acc]
+      end
+
+    Enum.reverse(acc)
   end
+
+  # ---------- clause (with typed params) & effects ---------------------------
 
   defp parse_clause(block_lines) do
     [hdr | tail] = block_lines
@@ -258,10 +272,8 @@ defmodule Logos.Parser do
           |> String.split(",")
           |> Enum.map(&String.trim/1)
           |> Enum.map(fn p ->
-            # allow: "x: Type" or "x"
             case String.split(p, ":") |> Enum.map(&String.trim/1) do
               [id, t] -> %{name: id, type: normalize_param_type(t)}
-              # default
               [id] -> %{name: id, type: :uint256}
             end
           end)
@@ -287,13 +299,7 @@ defmodule Logos.Parser do
 
     shall = parse_effect(shall_block)
 
-    %Logos.AST.Clause{
-      name: name,
-      params: params,
-      provided: provided,
-      shall: shall,
-      remedies: remedies
-    }
+    %Clause{name: name, params: params, provided: provided, shall: shall, remedies: remedies}
   end
 
   defp normalize_param_type(t) do
@@ -314,7 +320,7 @@ defmodule Logos.Parser do
         raise("Expected `#{marker}` block")
 
     pre = Enum.drop(lines, idx + 1)
-    # take until next header word of same clause or section
+
     {block, rest} =
       Enum.split_while(pre, fn l ->
         t = String.trim(l)
@@ -346,7 +352,7 @@ defmodule Logos.Parser do
     end
   end
 
-  # -- effect parsing (small, compositional) -----------------------------------
+  # --- Effect parsing (same as earlier; compact) -----------------------------
 
   defp parse_effect(lines) do
     text =
@@ -375,10 +381,11 @@ defmodule Logos.Parser do
       String.starts_with?(text, "Set {") ->
         kv = parse_kv_map(text, "Set")
 
-        %Logos.AST.Eff{
+        %Eff{
           op: :set,
           args: %{
-            "field" => must(kv, "field"),
+            # ← strip quotes here
+            "field" => must(kv, "field") |> strip_quotes(),
             "value" => parse_value(must(kv, "value"))
           }
         }
@@ -386,7 +393,7 @@ defmodule Logos.Parser do
       String.starts_with?(text, "Emit {") ->
         kv = parse_kv_map(text, "Emit")
 
-        %Logos.AST.Eff{
+        %Eff{
           op: :emit,
           args: %{
             "event" => must(kv, "event") |> strip_quotes(),
@@ -397,7 +404,7 @@ defmodule Logos.Parser do
       String.starts_with?(text, "If {") ->
         kv = parse_kv_map(text, "If")
 
-        %Logos.AST.Eff{
+        %Eff{
           op: :if,
           args: %{
             "cond" => must(kv, "cond"),
@@ -408,20 +415,17 @@ defmodule Logos.Parser do
 
       String.starts_with?(text, "Transfer {") ->
         kv = parse_kv_map(text, "Transfer")
-        %Logos.AST.Eff{op: :transfer, args: kv}
+        %Eff{op: :transfer, args: kv}
 
       true ->
-        # Try to treat it as a single effect inside "All [ ... ]" omission
-        %Logos.AST.Eff{op: :emit, args: %{"event" => "Note", "data" => %{"raw" => text}}}
+        %Eff{op: :emit, args: %{"event" => "Note", "data" => %{"raw" => text}}}
     end
   end
 
+  # ---------------- tiny helpers ----------------
+
   defp parse_kv_map(text, head) do
-    body =
-      text
-      |> strip_prefix("#{head} {")
-      |> strip_suffix("}")
-      |> String.trim()
+    body = text |> strip_prefix("#{head} {") |> strip_suffix("}") |> String.trim()
 
     split_top_level(body, ",")
     |> Enum.map(fn pair ->
@@ -435,17 +439,8 @@ defmodule Logos.Parser do
 
   defp must(map, key), do: Map.fetch!(map, key)
 
-  defp maybe_wrap_list(s) do
-    st = String.trim(s)
-
-    if String.starts_with?(st, "All [") do
-      st
-    else
-      "All [ " <> st <> " ]"
-    end
-  end
-
-  # -- tiny expr/value parser --------------------------------------------------
+  defp maybe_wrap_list(s),
+    do: if(String.starts_with?(String.trim(s), "All ["), do: s, else: "All [ " <> s <> " ]")
 
   defp parse_value(v) do
     v = String.trim(v)
@@ -464,61 +459,40 @@ defmodule Logos.Parser do
         strip_quotes(v)
 
       String.match?(v, ~r/^Some\((.+)\)$/) ->
-        {:some, parse_value(Regex.replace(~r/^Some\(/, v, "") |> strip_suffix(")"))}
+        {:some, v |> String.replace_prefix("Some(", "") |> strip_suffix(")")}
 
       v == "None" ->
         :none
 
       true ->
-        # leave as raw expr id or call; codegen will map where possible
         {:raw, v}
     end
   end
 
-  defp strip_prefix(s, p) do
-    if String.starts_with?(s, p), do: String.replace_prefix(s, p, ""), else: s
-  end
+  defp strip_prefix(s, p),
+    do: if(String.starts_with?(s, p), do: String.replace_prefix(s, p, ""), else: s)
 
-  defp strip_suffix(s, suf) do
-    if String.ends_with?(s, suf), do: String.replace_suffix(s, suf, ""), else: s
-  end
+  defp strip_suffix(s, suf),
+    do: if(String.ends_with?(s, suf), do: String.replace_suffix(s, suf, ""), else: s)
 
-  defp strip_quotes(s) do
-    s |> String.trim() |> String.trim_leading("\"") |> String.trim_trailing("\"")
-  end
+  defp strip_quotes(s),
+    do: s |> String.trim() |> String.trim_leading("\"") |> String.trim_trailing("\"")
 
-  # Split by delimiter at top-level (not inside {...} / [...] / quotes)
+  # split by delimiter at top level (ignoring nested {...} / [...] / quotes)
   defp split_top_level(s, delim) do
     {parts, buf, _lvl, _in_q} =
       String.codepoints(s)
       |> Enum.reduce({[], "", 0, false}, fn ch, {acc, cur, lvl, q} ->
         cond do
-          ch == "\"" ->
-            {acc, cur <> ch, lvl, !q}
-
-          q ->
-            {acc, cur <> ch, lvl, q}
-
-          ch == "{" or ch == "[" ->
-            {acc, cur <> ch, lvl + 1, q}
-
-          ch == "}" or ch == "]" ->
-            {acc, cur <> ch, lvl - 1, q}
-
-          ch == String.first(delim) and lvl == 0 and
-              String.ends_with?(cur, String.slice(delim, 0, 0)) ->
-            # single-char delim assumed
-            {[String.trim(cur) | acc], "", lvl, q}
-
-          ch == "," and lvl == 0 and delim == "," ->
-            {[String.trim(cur) | acc], "", lvl, q}
-
-          true ->
-            {acc, cur <> ch, lvl, q}
+          ch == "\"" -> {acc, cur <> ch, lvl, !q}
+          q -> {acc, cur <> ch, lvl, q}
+          ch in ["{", "["] -> {acc, cur <> ch, lvl + 1, q}
+          ch in ["}", "]"] -> {acc, cur <> ch, lvl - 1, q}
+          ch == "," and lvl == 0 and delim == "," -> {[String.trim(cur) | acc], "", lvl, q}
+          true -> {acc, cur <> ch, lvl, q}
         end
       end)
 
-    parts = [buf | parts] |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
-    Enum.reverse(parts)
+    [buf | parts] |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == "")) |> Enum.reverse()
   end
 end

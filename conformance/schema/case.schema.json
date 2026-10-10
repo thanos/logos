@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/thanos/logos/conformance/schema/case.schema.json",
+  "title": "Logos conformance case",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "id",
+    "title",
+    "category",
+    "priority",
+    "tags",
+    "class",
+    "source_ref",
+    "rationale",
+    "origin",
+    "implementation_status",
+    "fixture_version",
+    "baseline_commit",
+    "phases"
+  ],
+  "properties": {
+    "fixture_version": {"const": 1},
+    "baseline_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "id": {"type": "string", "minLength": 3},
+    "title": {"type": "string"},
+    "category": {"type": "string"},
+    "priority": {"enum": ["P0", "P1", "P2"]},
+    "tags": {"type": "array", "items": {"type": "string"}},
+    "class": {"enum": ["current", "spec", "parity"]},
+    "source_ref": {"type": "string"},
+    "rationale": {"type": "string"},
+    "origin": {
+      "enum": ["ethereum_standard", "logos_spec", "reviewed_reference", "observed_elixir"]
+    },
+    "implementation_status": {
+      "enum": ["passes", "known_failure", "blocked", "spec_gap"]
+    },
+    "known_failure_id": {"type": ["string", "null"]},
+    "blocked_by": {"type": ["string", "null"]},
+    "phases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "enum": ["parse", "solidity", "evm", "assemble", "keccak", "abi", "atoms", "anvil"]
+      }
+    },
+    "logos_source": {"type": "string"},
+    "timeout_ms": {"type": "integer", "minimum": 1},
+    "expect": {"type": "object"},
+    "observed": {"type": "object"},
+    "note": {"type": "string"}
+  }
+}

@@ -1,0 +1,563 @@
+[
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "current",
+    "id": "evm.compile-raises-shr",
+    "title": "compile_to_evm raises Unknown opcode :SHR",
+    "category": "evm",
+    "tags": [
+      "evm"
+    ],
+    "source_ref": "lib/codegen/evm.ex",
+    "rationale": "Every current contract hits SHR in the runtime header before bytecode exists.",
+    "origin": "observed_elixir",
+    "implementation_status": "passes",
+    "phases": [
+      "evm"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\n",
+    "expect": {
+      "evm": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message": "Unknown opcode: :SHR"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "evm.unknown-name-not-zero",
+    "title": "Unknown names are diagnostics",
+    "category": "evm",
+    "tags": [
+      "evm",
+      "types"
+    ],
+    "source_ref": "docs/quick-introduction.md#3",
+    "rationale": "An unknown predicate must not become PUSH 0.",
+    "origin": "logos_spec",
+    "implementation_status": "blocked",
+    "known_failure_id": "KF-EVM-UNKNOWN-ZERO",
+    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "phases": [
+      "evm"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      not_a_name == 1\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\n",
+    "expect": {
+      "evm": {
+        "status": "error"
+      },
+      "execute": {
+        "outcome": "diagnostic",
+        "forbids": "push0_substitution"
+      }
+    },
+    "note": "Latent: parse_term pushes 0. Blocked until the header assembles."
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "evm.scenario-escrow-happy",
+    "title": "Escrow happy path",
+    "category": "evm",
+    "tags": [
+      "evm",
+      "spec",
+      "blocked"
+    ],
+    "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
+    "rationale": "Deposit, time condition, release, token balances and state. Deposit syntax is Escrow, which the parser does not build, so this stays blocked even after SHR until Escrow exists.",
+    "origin": "logos_spec",
+    "implementation_status": "blocked",
+    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
+    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "phases": [
+      "evm"
+    ],
+    "logos_source": "Contract WorkForHire_M1\n  Parties\n    client : Party = 0xC1e0000000000000000000000000000000000000\n  Definitions\n    let price : Decimal = 10\n  State\n    record { submitted : Bool = false, accepted : Bool = false }\n  Clauses\n    Clause SubmitWork(): Effect\n      Provided That\n        submitted == false\n      Shall\n        All [\n          Set { field: \"submitted\", value: true },\n          Emit { event: \"Submitted\", data: {} }\n        ]\n  Term\n    until now + Duration(\"90d\")\n  GoverningLaw\n    \"New York, USA\"\n  Signatures\n    require client signed\nEnd\n",
+    "expect": {
+      "evm": {
+        "status": "ok"
+      },
+      "execute": {
+        "outcome": "success",
+        "token_balance_moved": true,
+        "also_blocked_by": "escrow_syntax"
+      }
+    },
+    "observed": {
+      "evm": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message": "Unknown opcode: :SHR"
+      }
+    },
+    "note": "Deposit, time condition, release, token balances and state. Deposit syntax is Escrow, which the parser does not build, so this stays blocked even after SHR until Escrow exists."
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "evm.scenario-premature",
+    "title": "Premature release reverts",
+    "category": "evm",
+    "tags": [
+      "evm",
+      "spec",
+      "blocked"
+    ],
+    "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
+    "rationale": "now = deadline - 1 reverts and changes nothing when the guard is >=.",
+    "origin": "logos_spec",
+    "implementation_status": "blocked",
+    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
+    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "phases": [
+      "evm"
+    ],
+    "logos_source": "Contract C\nState\n  record { start_ts : Int = 1700000000 }\nClauses\n  Clause Release(): Effect\n    Provided That\n      now >= start_ts + Duration(\"7d\")\n    Shall\n      Set { field: \"start_ts\", value: 1 }\nEnd\n",
+    "expect": {
+      "evm": {
+        "status": "ok"
+      },
+      "execute": {
+        "outcome": "revert",
+        "storage_unchanged": true,
+        "balance_unchanged": true
+      }
+    },
+    "observed": {
+      "evm": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message": "Unknown opcode: :SHR"
+      }
+    },
+    "note": "now = deadline - 1 reverts and changes nothing when the guard is >=."
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "evm.scenario-deadline",
+    "title": "Exact deadline succeeds for >=",
+    "category": "evm",
+    "tags": [
+      "evm",
+      "spec",
+      "blocked"
+    ],
+    "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
+    "rationale": "now = deadline succeeds when the rule is >=. KF-EVM-CMP-ORDER currently inverts this.",
+    "origin": "logos_spec",
+    "implementation_status": "blocked",
+    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
+    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "phases": [
+      "evm"
+    ],
+    "logos_source": "Contract C\nState\n  record { start_ts : Int = 1700000000 }\nClauses\n  Clause Release(): Effect\n    Provided That\n      now >= start_ts + Duration(\"7d\")\n    Shall\n      Set { field: \"start_ts\", value: 1 }\nEnd\n",
+    "expect": {
+      "evm": {
+        "status": "ok"
+      },
+      "execute": {
+        "outcome": "success",
+        "storage_unchanged": false
+      }
+    },
+    "observed": {
+      "evm": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message": "Unknown opcode: :SHR"
+      }
+    },
+    "note": "now = deadline succeeds when the rule is >=. KF-EVM-CMP-ORDER currently inverts this."
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "evm.scenario-double-release",
+    "title": "Second release reverts",
+    "category": "evm",
+    "tags": [
+      "evm",
+      "spec",
+      "blocked"
+    ],
+    "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
+    "rationale": "A second release does not transfer again.",
+    "origin": "logos_spec",
+    "implementation_status": "blocked",
+    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
+    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "phases": [
+      "evm"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\n",
+    "expect": {
+      "evm": {
+        "status": "ok"
+      },
+      "execute": {
+        "outcome": "revert",
+        "second_call": "revert",
+        "duplicate_transfer": false
+      }
+    },
+    "observed": {
+      "evm": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message": "Unknown opcode: :SHR"
+      }
+    },
+    "note": "A second release does not transfer again."
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "evm.scenario-wrong-caller",
+    "title": "Wrong caller is rejected",
+    "category": "evm",
+    "tags": [
+      "evm",
+      "spec",
+      "blocked"
+    ],
+    "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
+    "rationale": "An unauthorized caller changes nothing. No caller check is emitted today.",
+    "origin": "logos_spec",
+    "implementation_status": "blocked",
+    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
+    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "phases": [
+      "evm"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\n",
+    "expect": {
+      "evm": {
+        "status": "ok"
+      },
+      "execute": {
+        "outcome": "revert",
+        "storage_unchanged": true,
+        "normative_fragment": "asm.calldata-guard"
+      }
+    },
+    "observed": {
+      "evm": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message": "Unknown opcode: :SHR"
+      }
+    },
+    "note": "An unauthorized caller changes nothing. No caller check is emitted today."
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "evm.scenario-three-selectors",
+    "title": "Three selectors dispatch",
+    "category": "evm",
+    "tags": [
+      "evm",
+      "spec",
+      "blocked"
+    ],
+    "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
+    "rationale": "Each selector reaches its body. An unknown selector reverts. KF-EVM-DISPATCH.",
+    "origin": "logos_spec",
+    "implementation_status": "blocked",
+    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
+    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "phases": [
+      "evm"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause One(): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\n  Clause Two(to: Address): Effect\n    Provided That\n      x == 1\n    Shall\n      Set { field: \"x\", value: 2 }\n  Clause Three(amount: Int): Effect\n    Provided That\n      x == 2\n    Shall\n      Set { field: \"x\", value: 3 }\nEnd\n",
+    "expect": {
+      "evm": {
+        "status": "ok"
+      },
+      "execute": {
+        "outcome": "success",
+        "selector_count": "3",
+        "unknown_selector": "revert",
+        "normative_fragment": "asm.dispatch-dup"
+      }
+    },
+    "observed": {
+      "evm": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message": "Unknown opcode: :SHR"
+      }
+    },
+    "note": "Each selector reaches its body. An unknown selector reverts. KF-EVM-DISPATCH."
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "evm.scenario-erc20-false",
+    "title": "ERC-20 false return reverts",
+    "category": "evm",
+    "tags": [
+      "evm",
+      "spec",
+      "blocked"
+    ],
+    "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
+    "rationale": "A token that returns false rolls the transaction back.",
+    "origin": "logos_spec",
+    "implementation_status": "blocked",
+    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
+    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "phases": [
+      "evm"
+    ],
+    "logos_source": "Contract C\n  Parties\n    client : Party = 0xC1e0000000000000000000000000000000000000\n  State\n    record { x : Int = 0 }\n  Clauses\n    Clause Pay(to: Address, amount: Int): Effect\n      Provided That\n        x == 0\n      Shall\n        Transfer { asset: 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, from: client, to: to, amount: amount }\nEnd\n",
+    "expect": {
+      "evm": {
+        "status": "ok"
+      },
+      "execute": {
+        "outcome": "revert",
+        "rolled_back": true
+      }
+    },
+    "observed": {
+      "evm": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message": "Unknown opcode: :SHR"
+      }
+    },
+    "note": "A token that returns false rolls the transaction back."
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "evm.scenario-erc20-revert",
+    "title": "ERC-20 revert rolls back",
+    "category": "evm",
+    "tags": [
+      "evm",
+      "spec",
+      "blocked"
+    ],
+    "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
+    "rationale": "A reverting token rolls state back.",
+    "origin": "logos_spec",
+    "implementation_status": "blocked",
+    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
+    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "phases": [
+      "evm"
+    ],
+    "logos_source": "Contract C\n  Parties\n    client : Party = 0xC1e0000000000000000000000000000000000000\n  State\n    record { x : Int = 0 }\n  Clauses\n    Clause Pay(to: Address, amount: Int): Effect\n      Provided That\n        x == 0\n      Shall\n        Transfer { asset: 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, from: client, to: to, amount: amount }\nEnd\n",
+    "expect": {
+      "evm": {
+        "status": "ok"
+      },
+      "execute": {
+        "outcome": "revert",
+        "rolled_back": true
+      }
+    },
+    "observed": {
+      "evm": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message": "Unknown opcode: :SHR"
+      }
+    },
+    "note": "A reverting token rolls state back."
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "evm.scenario-erc20-malformed",
+    "title": "Malformed ERC-20 return is rejected",
+    "category": "evm",
+    "tags": [
+      "evm",
+      "spec",
+      "blocked"
+    ],
+    "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
+    "rationale": "1, 31, 33 byte and noncanonical bool returns do not count as success.",
+    "origin": "logos_spec",
+    "implementation_status": "blocked",
+    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
+    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "phases": [
+      "evm"
+    ],
+    "logos_source": "Contract C\n  Parties\n    client : Party = 0xC1e0000000000000000000000000000000000000\n  State\n    record { x : Int = 0 }\n  Clauses\n    Clause Pay(to: Address, amount: Int): Effect\n      Provided That\n        x == 0\n      Shall\n        Transfer { asset: 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, from: client, to: to, amount: amount }\nEnd\n",
+    "expect": {
+      "evm": {
+        "status": "ok"
+      },
+      "execute": {
+        "outcome": "revert",
+        "silent_success": false,
+        "normative_fragment": "asm.returndata-width"
+      }
+    },
+    "observed": {
+      "evm": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message": "Unknown opcode: :SHR"
+      }
+    },
+    "note": "1, 31, 33 byte and noncanonical bool returns do not count as success."
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "evm.scenario-atomic-all",
+    "title": "All rolls back earlier effects",
+    "category": "evm",
+    "tags": [
+      "evm",
+      "spec",
+      "blocked"
+    ],
+    "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
+    "rationale": "An earlier Set and Emit do not persist when a later transfer fails.",
+    "origin": "logos_spec",
+    "implementation_status": "blocked",
+    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
+    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "phases": [
+      "evm"
+    ],
+    "logos_source": "Contract C\n  Parties\n    client : Party = 0xC1e0000000000000000000000000000000000000\n  State\n    record { x : Int = 0 }\n  Clauses\n    Clause Pay(to: Address, amount: Int): Effect\n      Provided That\n        x == 0\n      Shall\n        Transfer { asset: 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, from: client, to: to, amount: amount }\nEnd\n",
+    "expect": {
+      "evm": {
+        "status": "ok"
+      },
+      "execute": {
+        "outcome": "revert",
+        "rolled_back": true,
+        "normative_fragment": "asm.call-order"
+      }
+    },
+    "observed": {
+      "evm": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message": "Unknown opcode: :SHR"
+      }
+    },
+    "note": "An earlier Set and Emit do not persist when a later transfer fails."
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "evm.scenario-creation",
+    "title": "Deployed code equals runtime",
+    "category": "evm",
+    "tags": [
+      "evm",
+      "spec",
+      "blocked"
+    ],
+    "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
+    "rationale": "Creation bytecode returns the runtime blob and that blob dispatches.",
+    "origin": "logos_spec",
+    "implementation_status": "blocked",
+    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
+    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "phases": [
+      "evm"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\n",
+    "expect": {
+      "evm": {
+        "status": "ok"
+      },
+      "execute": {
+        "outcome": "success",
+        "runtime_equals_deployed_code": true
+      }
+    },
+    "observed": {
+      "evm": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message": "Unknown opcode: :SHR"
+      }
+    },
+    "note": "Creation bytecode returns the runtime blob and that blob dispatches."
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "evm.scenario-solidity-parity",
+    "title": "Solidity and EVM observe the same state",
+    "category": "evm",
+    "tags": [
+      "evm",
+      "spec",
+      "blocked"
+    ],
+    "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
+    "rationale": "Same contract and scenario. Gas may differ. Observable state and logs may not.",
+    "origin": "logos_spec",
+    "implementation_status": "blocked",
+    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
+    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "phases": [
+      "evm"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\n",
+    "expect": {
+      "evm": {
+        "status": "ok"
+      },
+      "execute": {
+        "outcome": "success",
+        "logs_match_solidity": true,
+        "storage_matches_solidity": true
+      }
+    },
+    "observed": {
+      "evm": {
+        "status": "error",
+        "exception": "RuntimeError",
+        "message": "Unknown opcode: :SHR"
+      }
+    },
+    "note": "Same contract and scenario. Gas may differ. Observable state and logs may not."
+  }
+]

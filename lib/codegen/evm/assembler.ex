@@ -1,212 +1,545 @@
-defmodule Logos.Codegen.EVM.Assembler do
-  @moduledoc false
-  # Tiny two-pass assembler with labels and PUSH1..PUSH32 selection.
-  # Instruction forms:
-  #   {:label, :L0}
-  #   {:op, :SSTORE}
-  #   {:push, <<raw_bytes>>}   # exact bytes to push (we pick PUSHn)
-  #   {:push_u, non_neg_integer()} # integer -> big-endian bytes
-  #   {:jump_label, :L0}       # will encode as PUSH2 <addr> ; JUMP
-  #   {:jumpi_label, :L0}      # will encode as PUSH2 <addr> ; JUMPI
-  #
-  # Returns binary bytecode.
+# defmodule Logos.EVM.Assembler do
+#   @moduledoc """
+#   Minimal two-pass EVM assembler with labels and PUSHn selection.
 
-  @op %{
+#   Accepted instructions:
+#     * `{:label, :L}`                  -> emits JUMPDEST
+#     * `{:op, atom}`                   -> single opcode (must exist in table)
+#     * `{:push, <<bytes::binary-size(1..32)>>}` -> raw PUSH
+#     * `{:push_u, non_neg_integer()}`  -> unsigned integer (auto-chooses PUSHn, or PUSH0 for 0)
+#     * `{:push_u, {:label, :L, n}}`    -> address of label L as `n`-byte big-endian
+#     * `{:jump_label, :L}`             -> PUSH2 addr; JUMP
+#     * `{:jumpi_label, :L}`            -> PUSH2 addr; JUMPI
+#     * lists are flattened
+#   """
+
+#   @type instr ::
+#           {:label, atom()}
+#           | {:op, atom()}
+#           | {:push, binary()}
+#           | {:push_u, non_neg_integer() | {:label, atom(), pos_integer()}}
+#           | {:jump_label, atom()}
+#           | {:jumpi_label, atom()}
+#           | [any()]
+
+#   # --- opcode table (only what we need, add more as desired) -----------------
+#   @op <<
+#     # 0x00..
+#     # STOP
+#     0x00::8,
+#     # ADD
+#     0x01::8,
+#     # MUL
+#     0x02::8,
+#     # SUB
+#     0x03::8,
+#     # DIV
+#     0x04::8,
+#     # LT
+#     0x10::8,
+#     # GT
+#     0x11::8,
+#     # EQ
+#     0x14::8,
+#     # ISZERO
+#     0x15::8,
+#     # AND
+#     0x16::8,
+#     # OR
+#     0x17::8,
+#     # NOT (rare)
+#     0x19::8,
+#     # CALLDATALOAD
+#     0x35::8,
+#     # CALLDATASIZE
+#     0x36::8,
+#     # CALLDATACOPY
+#     0x37::8,
+#     # CODECOPY
+#     0x39::8,
+#     # RETURNDATASIZE
+#     0x3D::8,
+#     # RETURNDATACOPY
+#     0x3E::8,
+#     # BLOCKHASH
+#     0x40::8,
+#     # TIMESTAMP   <-- IMPORTANT
+#     0x42::8,
+#     # NUMBER
+#     0x43::8,
+#     # POP
+#     0x50::8,
+#     # MLOAD
+#     0x51::8,
+#     # MSTORE
+#     0x52::8,
+#     # SLOAD
+#     0x54::8,
+#     # SSTORE
+#     0x55::8,
+#     # JUMP
+#     0x56::8,
+#     # JUMPI
+#     0x57::8,
+#     # JUMPDEST
+#     0x5B::8,
+#     # PUSH0       <-- IMPORTANT (Shanghai)
+#     0x5F::8,
+#     # PUSH1
+#     0x60::8,
+#     # PUSH2..PUSH32 are contiguous 0x61..0x7f
+#     # DUP1
+#     0x80::8,
+#     # DUP2
+#     0x81::8,
+#     # SWAP1
+#     0x90::8,
+#     # LOG0
+#     0xA0::8,
+#     # LOG1
+#     0xA1::8,
+#     # LOG2
+#     0xA2::8,
+#     # CALL
+#     0xF1::8,
+#     # REVERT
+#     0xFD::8,
+#     # INVALID
+#     0xFE::8
+#   >>
+
+#   @opcode_map %{
+#     STOP: 0x00,
+#     ADD: 0x01,
+#     MUL: 0x02,
+#     SUB: 0x03,
+#     DIV: 0x04,
+#     LT: 0x10,
+#     GT: 0x11,
+#     EQ: 0x14,
+#     ISZERO: 0x15,
+#     AND: 0x16,
+#     OR: 0x17,
+#     NOT: 0x19,
+#     CALLDATALOAD: 0x35,
+#     CALLDATASIZE: 0x36,
+#     CALLDATACOPY: 0x37,
+#     CODECOPY: 0x39,
+#     RETURNDATASIZE: 0x3D,
+#     RETURNDATACOPY: 0x3E,
+#     BLOCKHASH: 0x40,
+#     TIMESTAMP: 0x42,
+#     NUMBER: 0x43,
+#     POP: 0x50,
+#     MLOAD: 0x51,
+#     MSTORE: 0x52,
+#     SLOAD: 0x54,
+#     SSTORE: 0x55,
+#     JUMP: 0x56,
+#     JUMPI: 0x57,
+#     JUMPDEST: 0x5B,
+#     PUSH0: 0x5F,
+#     PUSH1: 0x60,
+#     DUP1: 0x80,
+#     DUP2: 0x81,
+#     SWAP1: 0x90,
+#     LOG0: 0xA0,
+#     LOG1: 0xA1,
+#     LOG2: 0xA2,
+#     CALL: 0xF1,
+#     REVERT: 0xFD,
+#     INVALID: 0xFE
+#   }
+
+#   @doc "Assemble a list of instructions into a binary of EVM bytecode."
+#   @spec assemble([instr]) :: binary()
+#   def assemble(instrs) do
+#     flat = List.flatten(instrs)
+#     {with_placeholders, labels} = resolve_labels(flat)
+#     encode(with_placeholders, labels)
+#   end
+
+#   # --------------------------- pass 1: resolve labels ------------------------
+
+#   defp resolve_labels(instrs) do
+#     {_, pos, labels, out} =
+#       Enum.reduce(instrs, {0, 0, %{}, []}, fn ins, {i, pc, map, acc} ->
+#         case ins do
+#           {:label, name} ->
+#             # JUMPDEST consumes 1 byte
+#             {i + 1, pc + 1, Map.put(map, name, pc), [{:op, :JUMPDEST} | acc]}
+
+#           {:jump_label, name} ->
+#             # placeholder: PUSH2 addr; JUMP  -> 1 + 2 + 1 bytes
+#             {i + 1, pc + 3, map, [{:jump_label, name} | acc]}
+
+#           {:jumpi_label, name} ->
+#             {i + 1, pc + 3, map, [{:jumpi_label, name} | acc]}
+
+#           {:push_u, {:label, name, n}} when n in 1..32 ->
+#             # placeholder PUSHn addr
+#             {i + 1, pc + 1 + n, map, [{:push_u, {:label, name, n}} | acc]}
+
+#           {:op, :PUSH0} ->
+#             {i + 1, pc + 1, map, [ins | acc]}
+
+#           {:op, op} ->
+#             code = opcode!(op)
+#             {i + 1, pc + 1, map, [ins | acc]}
+
+#           {:push, bin} when is_binary(bin) and byte_size(bin) in 1..32 ->
+#             {i + 1, pc + 1 + byte_size(bin), map, [ins | acc]}
+
+#           {:push_u, int} when is_integer(int) and int >= 0 ->
+#             size = int_size(int)
+#             size = if size == 0, do: 0, else: size
+#             pc_inc = if size == 0, do: 1, else: 1 + size
+#             {i + 1, pc + pc_inc, map, [ins | acc]}
+
+#           other ->
+#             raise "Unsupported instruction in pass1: #{inspect(other)}"
+#         end
+#       end)
+
+#     {Enum.reverse(out), labels}
+#   end
+
+#   # ---------------------------- pass 2: encode --------------------------------
+
+#   defp encode(instrs, labels) do
+#     IO.iodata_to_binary(Enum.map(instrs, &encode1(&1, labels)))
+#   end
+
+#   defp encode1({:op, op}, _labels) do
+#     <<opcode!(op)>>
+#   end
+
+#   defp encode1({:push, bin}, _labels) when byte_size(bin) in 1..32 do
+#     n = byte_size(bin)
+#     <<0x60 + (n - 1), bin::binary>>
+#   end
+
+#   defp encode1({:push_u, 0}, _labels) do
+#     <<opcode!(:PUSH0)>>
+#   end
+
+#   defp encode1({:push_u, int}, _labels) when is_integer(int) and int > 0 do
+#     bin = :binary.encode_unsigned(int)
+#     n = byte_size(bin)
+#     <<0x60 + (n - 1), bin::binary>>
+#   end
+
+#   defp encode1({:push_u, {:label, name, n}}, labels) when n in 1..32 do
+#     addr = Map.fetch!(labels, name)
+#     bin = :binary.encode_unsigned(addr) |> left_pad(n)
+#     <<0x60 + (n - 1), bin::binary>>
+#   end
+
+#   defp encode1({:jump_label, name}, labels) do
+#     addr = Map.fetch!(labels, name)
+#     <<0x61, left_pad(:binary.encode_unsigned(addr), 2)::binary, opcode!(:JUMP)>>
+#   end
+
+#   defp encode1({:jumpi_label, name}, labels) do
+#     addr = Map.fetch!(labels, name)
+#     <<0x61, left_pad(:binary.encode_unsigned(addr), 2)::binary, opcode!(:JUMPI)>>
+#   end
+
+#   defp encode1(list, labels) when is_list(list) do
+#     IO.iodata_to_binary(Enum.map(list, &encode1(&1, labels)))
+#   end
+
+#   defp encode1(other, _labels), do: raise("Unsupported instruction in pass2: #{inspect(other)}")
+
+#   # -------------------------------- helpers ----------------------------------
+
+#   defp opcode!(op_atom) do
+#     case @opcode_map[op_atom] do
+#       nil -> raise "Unknown opcode: #{inspect(op_atom)}"
+#       b -> b
+#     end
+#   end
+
+#   defp int_size(0), do: 0
+
+#   defp int_size(int) do
+#     byte_size(:binary.encode_unsigned(int))
+#   end
+
+#   defp left_pad(bin, n) when is_integer(n), do: left_pad(bin, n - byte_size(bin))
+#   defp left_pad(bin, k) when k <= 0, do: bin
+#   defp left_pad(bin, k), do: :binary.copy(<<0>>, k) <> bin
+# end
+
+defmodule Logos.EVM.Assembler do
+  @moduledoc """
+  Minimal two-pass EVM assembler with labels and PUSHn selection.
+
+  Accepted instructions:
+    * `{:label, :L}`                  -> emits JUMPDEST
+    * `{:op, atom}`                   -> single opcode (must exist in table)
+    * `{:push, <<bytes::binary-size(1..32)>>}` -> raw PUSH
+    * `{:push_u, non_neg_integer()}`  -> unsigned integer (auto-chooses PUSHn, or PUSH0 for 0)
+    * `{:push_u, {:label, :L, n}}`    -> address of label L as `n`-byte big-endian
+    * `{:jump_label, :L}`             -> PUSH2 addr; JUMP
+    * `{:jumpi_label, :L}`            -> PUSH2 addr; JUMPI
+    * lists are flattened
+  """
+
+  @type instr ::
+          {:label, atom()}
+          | {:op, atom()}
+          | {:push, binary()}
+          | {:push_u, non_neg_integer() | {:label, atom(), pos_integer()}}
+          | {:jump_label, atom()}
+          | {:jumpi_label, atom()}
+          | [any()]
+
+  # --- opcode table (only what we need, add more as desired) -----------------
+  @op <<
+    # 0x00..
+    # STOP
+    0x00::8,
+    # ADD
+    0x01::8,
+    # MUL
+    0x02::8,
+    # SUB
+    0x03::8,
+    # DIV
+    0x04::8,
+    # LT
+    0x10::8,
+    # GT
+    0x11::8,
+    # EQ
+    0x14::8,
+    # ISZERO
+    0x15::8,
+    # AND
+    0x16::8,
+    # OR
+    0x17::8,
+    # NOT (rare)
+    0x19::8,
+    # CALLDATALOAD
+    0x35::8,
+    # CALLDATASIZE
+    0x36::8,
+    # CALLDATACOPY
+    0x37::8,
+    # CODECOPY
+    0x39::8,
+    # RETURNDATASIZE
+    0x3D::8,
+    # RETURNDATACOPY
+    0x3E::8,
+    # BLOCKHASH
+    0x40::8,
+    # TIMESTAMP   <-- IMPORTANT
+    0x42::8,
+    # NUMBER
+    0x43::8,
+    # POP
+    0x50::8,
+    # MLOAD
+    0x51::8,
+    # MSTORE
+    0x52::8,
+    # SLOAD
+    0x54::8,
+    # SSTORE
+    0x55::8,
+    # JUMP
+    0x56::8,
+    # JUMPI
+    0x57::8,
+    # JUMPDEST
+    0x5B::8,
+    # PUSH0       <-- IMPORTANT (Shanghai)
+    0x5F::8,
+    # PUSH1
+    0x60::8,
+    # PUSH2..PUSH32 are contiguous 0x61..0x7f
+    # DUP1
+    0x80::8,
+    # DUP2
+    0x81::8,
+    # SWAP1
+    0x90::8,
+    # LOG0
+    0xA0::8,
+    # LOG1
+    0xA1::8,
+    # LOG2
+    0xA2::8,
+    # CALL
+    0xF1::8,
+    # REVERT
+    0xFD::8,
+    # INVALID
+    0xFE::8
+  >>
+
+  @opcode_map %{
     STOP: 0x00,
     ADD: 0x01,
     MUL: 0x02,
     SUB: 0x03,
     DIV: 0x04,
-    SDIV: 0x05,
-    MOD: 0x06,
-    SMOD: 0x07,
-    ADDMOD: 0x08,
-    MULMOD: 0x09,
-    EXP: 0x0A,
-    SIGNEXTEND: 0x0B,
     LT: 0x10,
     GT: 0x11,
-    SLT: 0x12,
-    SGT: 0x13,
     EQ: 0x14,
     ISZERO: 0x15,
     AND: 0x16,
     OR: 0x17,
-    XOR: 0x18,
     NOT: 0x19,
-    BYTE: 0x1A,
-    SHL: 0x1B,
-    SHR: 0x1C,
-    SAR: 0x1D,
-    SHA3: 0x20,
-    ADDRESS: 0x30,
-    BALANCE: 0x31,
-    ORIGIN: 0x32,
-    CALLER: 0x33,
-    CALLVALUE: 0x34,
     CALLDATALOAD: 0x35,
     CALLDATASIZE: 0x36,
     CALLDATACOPY: 0x37,
-    CODESIZE: 0x38,
     CODECOPY: 0x39,
-    GASPRICE: 0x3A,
-    EXTCODESIZE: 0x3B,
-    EXTCODECOPY: 0x3C,
     RETURNDATASIZE: 0x3D,
     RETURNDATACOPY: 0x3E,
     BLOCKHASH: 0x40,
-    COINBASE: 0x41,
     TIMESTAMP: 0x42,
     NUMBER: 0x43,
-    DIFFICULTY: 0x44,
-    GASLIMIT: 0x45,
-    CHAINID: 0x46,
-    SELFBALANCE: 0x47,
-    BASEFEE: 0x48,
     POP: 0x50,
     MLOAD: 0x51,
     MSTORE: 0x52,
-    MSTORE8: 0x53,
     SLOAD: 0x54,
     SSTORE: 0x55,
     JUMP: 0x56,
     JUMPI: 0x57,
-    PC: 0x58,
-    MSIZE: 0x59,
-    GAS: 0x5A,
     JUMPDEST: 0x5B,
     PUSH0: 0x5F,
+    PUSH1: 0x60,
     DUP1: 0x80,
     DUP2: 0x81,
-    DUP3: 0x82,
-    DUP4: 0x83,
-    DUP5: 0x84,
-    DUP6: 0x85,
-    DUP7: 0x86,
-    DUP8: 0x87,
-    DUP9: 0x88,
-    DUP10: 0x89,
-    DUP11: 0x8A,
-    DUP12: 0x8B,
-    DUP13: 0x8C,
-    DUP14: 0x8D,
-    DUP15: 0x8E,
-    DUP16: 0x8F,
     SWAP1: 0x90,
-    SWAP2: 0x91,
-    SWAP3: 0x92,
-    SWAP4: 0x93,
-    SWAP5: 0x94,
-    SWAP6: 0x95,
-    SWAP7: 0x96,
-    SWAP8: 0x97,
-    SWAP9: 0x98,
-    SWAP10: 0x99,
-    SWAP11: 0x9A,
-    SWAP12: 0x9B,
-    SWAP13: 0x9C,
-    SWAP14: 0x9D,
-    SWAP15: 0x9E,
-    SWAP16: 0x9F,
     LOG0: 0xA0,
     LOG1: 0xA1,
     LOG2: 0xA2,
-    LOG3: 0xA3,
-    LOG4: 0xA4,
-    CREATE: 0xF0,
     CALL: 0xF1,
-    CALLCODE: 0xF2,
-    RETURN: 0xF3,
-    DELEGATECALL: 0xF4,
-    CREATE2: 0xF5,
-    STATICCALL: 0xFA,
     REVERT: 0xFD,
-    INVALID: 0xFE,
-    SELFDESTRUCT: 0xFF
+    INVALID: 0xFE
   }
 
+  @doc "Assemble a list of instructions into a binary of EVM bytecode."
+  @spec assemble([instr]) :: binary()
   def assemble(instrs) do
-    {with_addrs, labels} = resolve_labels(instrs)
-    encode(with_addrs, labels)
+    flat = List.flatten(instrs)
+    {with_placeholders, labels} = resolve_labels(flat)
+    encode(with_placeholders, labels)
   end
 
+  # --------------------------- pass 1: resolve labels ------------------------
+
   defp resolve_labels(instrs) do
-    # First pass: compute offsets (assuming PUSH sizes are not yet known -> pessimistically assume PUSH2 for label placeholders)
-    {_, labels, sized} =
-      Enum.reduce(instrs, {0, %{}, []}, fn i, {pc, lab, acc} ->
-        case i do
+    {_, pos, labels, out} =
+      Enum.reduce(instrs, {0, 0, %{}, []}, fn ins, {i, pc, map, acc} ->
+        case ins do
           {:label, name} ->
-            # keep a JUMPDEST to anchor
-            {pc, Map.put(lab, name, pc), [{:op, :JUMPDEST} | acc]}
+            # JUMPDEST consumes 1 byte
+            {i + 1, pc + 1, Map.put(map, name, pc), [{:op, :JUMPDEST} | acc]}
 
-          {:jump_label, l} ->
-            {pc + 1 + 2 + 1, lab, [{:op, :JUMP}, {:push_u, {:label, l, 2}} | acc]}
+          {:jump_label, name} ->
+            # placeholder: PUSH2 addr; JUMP  -> 1 + 2 + 1 bytes
+            {i + 1, pc + 3, map, [{:jump_label, name} | acc]}
 
-          {:jumpi_label, l} ->
-            {pc + 1 + 2 + 1, lab, [{:op, :JUMPI}, {:push_u, {:label, l, 2}} | acc]}
+          {:jumpi_label, name} ->
+            {i + 1, pc + 3, map, [{:jumpi_label, name} | acc]}
 
-          {:push_u, {:label, _l, n}} ->
-            {pc + 1 + n, lab, [i | acc]}
+          {:push_u, {:label, name, n}} when n in 1..32 ->
+            # placeholder PUSHn addr
+            {i + 1, pc + 1 + n, map, [{:push_u, {:label, name, n}} | acc]}
 
-          {:push, bin} ->
-            {pc + 1 + byte_size(bin), lab, [i | acc]}
-
-          {:push_u, int} when is_integer(int) and int >= 0 ->
-            n = int_size(int)
-            {pc + 1 + n, lab, [i | acc]}
+          {:op, :PUSH0} ->
+            {i + 1, pc + 1, map, [ins | acc]}
 
           {:op, op} ->
-            {pc + 1, lab, [i | acc]}
+            code = opcode!(op)
+            {i + 1, pc + 1, map, [ins | acc]}
 
-          other when is_list(other) ->
-            # allow nested sequences
-            {delta, lab2, enc} = resolve_labels(other)
-            {pc + delta, Map.merge(lab, lab2), enc ++ acc}
+          {:push, bin} when is_binary(bin) and byte_size(bin) in 1..32 ->
+            {i + 1, pc + 1 + byte_size(bin), map, [ins | acc]}
+
+          {:push_u, int} when is_integer(int) and int >= 0 ->
+            size = int_size(int)
+            size = if size == 0, do: 0, else: size
+            pc_inc = if size == 0, do: 1, else: 1 + size
+            {i + 1, pc + pc_inc, map, [ins | acc]}
+
+          other ->
+            raise "Unsupported instruction in pass1: #{inspect(other)}"
         end
       end)
 
-    {Enum.reverse(sized), labels}
+    {Enum.reverse(out), labels}
   end
 
-  defp int_size(0), do: 1
+  # ---------------------------- pass 2: encode --------------------------------
 
-  defp int_size(i) do
-    :math.ceil(:math.log2(i + 1)) |> trunc() |> then(fn b -> div(max(b, 1) + 7, 8) end)
+  defp encode(instrs, labels) do
+    IO.iodata_to_binary(Enum.map(instrs, &encode1(&1, labels)))
   end
 
-  defp encode(list, labels) do
-    list
-    |> Enum.map(fn
-      {:op, :JUMPDEST} ->
-        <<@op[:JUMPDEST]>>
-
-      {:op, k} ->
-        <<Map.fetch!(@op, k)>>
-
-      {:push, bin} ->
-        n = byte_size(bin)
-        if n < 1 or n > 32, do: raise("PUSH size #{n} invalid")
-        <<0x5F + n, bin::binary>>
-
-      {:push_u, {:label, l, n}} ->
-        addr = Map.fetch!(labels, l)
-        bin = :binary.encode_unsigned(addr) |> left_pad(n)
-        <<0x5F + n, bin::binary>>
-
-      {:push_u, int} when is_integer(int) and int >= 0 ->
-        n = int_size(int)
-        bin = :binary.encode_unsigned(int)
-        bin = left_pad(bin, n)
-        <<0x5F + n, bin::binary>>
-
-      other when is_list(other) ->
-        encode(other, labels)
-    end)
-    |> IO.iodata_to_binary()
+  defp encode1({:op, op}, _labels) do
+    <<opcode!(op)>>
   end
 
-  defp left_pad(bin, n) do
-    need = max(n - byte_size(bin), 0)
-    :binary.copy(<<0>>, need) <> bin
+  defp encode1({:push, bin}, _labels) when byte_size(bin) in 1..32 do
+    n = byte_size(bin)
+    <<0x60 + (n - 1), bin::binary>>
   end
+
+  defp encode1({:push_u, 0}, _labels) do
+    <<opcode!(:PUSH0)>>
+  end
+
+  defp encode1({:push_u, int}, _labels) when is_integer(int) and int > 0 do
+    bin = :binary.encode_unsigned(int)
+    n = byte_size(bin)
+    <<0x60 + (n - 1), bin::binary>>
+  end
+
+  defp encode1({:push_u, {:label, name, n}}, labels) when n in 1..32 do
+    addr = Map.fetch!(labels, name)
+    bin = :binary.encode_unsigned(addr) |> left_pad(n)
+    <<0x60 + (n - 1), bin::binary>>
+  end
+
+  defp encode1({:jump_label, name}, labels) do
+    addr = Map.fetch!(labels, name)
+    <<0x61, left_pad(:binary.encode_unsigned(addr), 2)::binary, opcode!(:JUMP)>>
+  end
+
+  defp encode1({:jumpi_label, name}, labels) do
+    addr = Map.fetch!(labels, name)
+    <<0x61, left_pad(:binary.encode_unsigned(addr), 2)::binary, opcode!(:JUMPI)>>
+  end
+
+  defp encode1(list, labels) when is_list(list) do
+    IO.iodata_to_binary(Enum.map(list, &encode1(&1, labels)))
+  end
+
+  defp encode1(other, _labels), do: raise("Unsupported instruction in pass2: #{inspect(other)}")
+
+  # -------------------------------- helpers ----------------------------------
+
+  defp opcode!(op_atom) do
+    case @opcode_map[op_atom] do
+      nil -> raise "Unknown opcode: #{inspect(op_atom)}"
+      b -> b
+    end
+  end
+
+  defp int_size(0), do: 0
+
+  defp int_size(int) do
+    byte_size(:binary.encode_unsigned(int))
+  end
+
+  defp left_pad(bin, n) when is_integer(n), do: left_pad(bin, n - byte_size(bin))
+  defp left_pad(bin, k) when k <= 0, do: bin
+  defp left_pad(bin, k), do: :binary.copy(<<0>>, k) <> bin
 end

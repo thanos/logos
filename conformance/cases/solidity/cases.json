@@ -1,0 +1,184 @@
+[
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "current",
+    "id": "solidity.set-emit",
+    "title": "Set and Emit become a function and an event",
+    "category": "solidity",
+    "tags": [
+      "solidity"
+    ],
+    "source_ref": "lib/codegen/solidity.ex",
+    "rationale": "The small backend emits an external function, a storage write, and Emitted.",
+    "origin": "observed_elixir",
+    "implementation_status": "passes",
+    "phases": [
+      "solidity"
+    ],
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause B(): Effect\n    Provided That\n      x == 0\n    Shall\n      All [ Set { field: \"x\", value: 1 }, Emit { event: \"Ping\", data: {} } ]\nEnd\n",
+    "expect": {
+      "solidity": {
+        "status": "ok",
+        "contains": [
+          "contract C",
+          "function B() external",
+          "emit Emitted(\"Ping\"",
+          "x = 1;"
+        ]
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "solidity.transfer-is-call",
+    "title": "Transfer is an ERC-20 call",
+    "category": "solidity",
+    "tags": [
+      "solidity",
+      "erc20"
+    ],
+    "source_ref": "docs/quick-introduction.md#2.5",
+    "rationale": "A Transfer effect moves tokens. An event-only note is not equivalent.",
+    "origin": "logos_spec",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-SOL-TRANSFER-EVENT",
+    "phases": [
+      "solidity"
+    ],
+    "logos_source": "Contract C\n  Parties\n    client : Party = 0xC1e0000000000000000000000000000000000000\n  State\n    record { x : Int = 0 }\n  Clauses\n    Clause Pay(to: Address, amount: Int): Effect\n      Provided That\n        x == 0\n      Shall\n        Transfer { asset: 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, from: client, to: to, amount: amount }\nEnd\n",
+    "expect": {
+      "solidity": {
+        "status": "ok",
+        "contains": [
+          "transferFrom"
+        ],
+        "not_contains": [
+          "TransferNote"
+        ]
+      }
+    },
+    "observed": {
+      "solidity": {
+        "status": "ok",
+        "contains": [
+          "TransferNote"
+        ],
+        "not_contains": [
+          "transferFrom"
+        ]
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P1",
+    "class": "spec",
+    "id": "solidity.raw-party",
+    "title": "Invalid party address is a diagnostic",
+    "category": "solidity",
+    "tags": [
+      "solidity"
+    ],
+    "source_ref": "README.md",
+    "rationale": "A non-hex party must not crash emit with FunctionClauseError.",
+    "origin": "logos_spec",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-SOL-RAW-PARTY",
+    "phases": [
+      "solidity"
+    ],
+    "logos_source": "Contract C\n  Parties\n    client : Party = 0xBu100000000000000000000000000000000000000\n  State\n    record { x : Int = 0 }\n  Clauses\n    Clause A(): Effect\n      Provided That\n        x == 0\n      Shall\n        Set { field: \"x\", value: 1 }\nEnd\n",
+    "expect": {
+      "solidity": {
+        "status": "error",
+        "category": "invalid_address"
+      }
+    },
+    "observed": {
+      "solidity": {
+        "status": "error",
+        "exception": "FunctionClauseError",
+        "message_contains": "solidity_addr"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "solidity.now-duration",
+    "title": "now and Duration lower to Solidity",
+    "category": "solidity",
+    "tags": [
+      "solidity",
+      "time"
+    ],
+    "source_ref": "docs/quick-introduction.md#8",
+    "rationale": "now is block time and 7d is 604800. Pasting the tokens through is not valid Solidity.",
+    "origin": "logos_spec",
+    "implementation_status": "known_failure",
+    "known_failure_id": "KF-SOL-NOW-DURATION",
+    "phases": [
+      "solidity"
+    ],
+    "logos_source": "Contract C\nState\n  record { start_ts : Int = 1700000000 }\nClauses\n  Clause Release(): Effect\n    Provided That\n      now >= start_ts + Duration(\"7d\")\n    Shall\n      Set { field: \"start_ts\", value: 1 }\nEnd\n",
+    "expect": {
+      "solidity": {
+        "status": "ok",
+        "contains": [
+          "block.timestamp",
+          "604800"
+        ],
+        "not_contains": [
+          "Duration("
+        ]
+      }
+    },
+    "observed": {
+      "solidity": {
+        "status": "ok",
+        "contains": [
+          "now >= start_ts + Duration(\"7d\")"
+        ]
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P1",
+    "class": "spec",
+    "id": "solidity.set-emit-executes",
+    "title": "Set and Emit execute on Anvil",
+    "category": "solidity",
+    "tags": [
+      "solidity",
+      "differential",
+      "anvil"
+    ],
+    "source_ref": "lib/codegen/solidity.ex",
+    "rationale": "The small Set/Emit contract is compiled with pinned solc and executed. Storage, the Emitted topic, gas, and bytecode size are recorded. Gas and bytecode are not required to match a reference.",
+    "origin": "logos_spec",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "set_emit",
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause B(): Effect\n    Provided That\n      x == 0\n    Shall\n      All [ Set { field: \"x\", value: 1 }, Emit { event: \"Ping\", data: {} } ]\nEnd\n",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "storage_x": "1",
+        "log_count": "1",
+        "topic0": "0x552ef73d705393dfadd2aef9cf62ca18e26f26c519bd5ce978866e6e944a1c06"
+      }
+    }
+  }
+]

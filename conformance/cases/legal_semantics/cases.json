@@ -1,0 +1,46 @@
+[
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P1",
+    "class": "spec",
+    "id": "legal.may-must-not",
+    "title": "May, Must Not, Unless, Within, Breach, and Remedy are future syntax",
+    "category": "legal_semantics",
+    "tags": [
+      "legal",
+      "spec-gap"
+    ],
+    "source_ref": "docs/quick-introduction.md",
+    "rationale": "These words are not in the implemented grammar. They are FUTURE_SPEC, not current features.",
+    "origin": "logos_spec",
+    "implementation_status": "spec_gap",
+    "phases": [
+      "parse"
+    ],
+    "note": "FUTURE_SPEC. Provided That is a guard, Shall is the effect, Otherwise Remedies is the fallback. Signatures are stored names only and are not authentication.",
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\n"
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P2",
+    "class": "spec",
+    "id": "legal.pretty-print",
+    "title": "No pretty printer exists",
+    "category": "legal_semantics",
+    "tags": [
+      "parser",
+      "spec-gap"
+    ],
+    "source_ref": "lib/",
+    "rationale": "Round-trip pretty printing is not fabricated.",
+    "origin": "logos_spec",
+    "implementation_status": "spec_gap",
+    "phases": [
+      "parse"
+    ],
+    "note": "FUTURE_SPEC: there is no AST printer.",
+    "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\n"
+  }
+]

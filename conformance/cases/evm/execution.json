@@ -1,0 +1,452 @@
+[
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "parity",
+    "id": "evm.push0-runtime-deploys",
+    "title": "Hand-assembled PUSH0 creation deploys its runtime",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "evm"
+    ],
+    "source_ref": "EIP-3855",
+    "rationale": "Proves the local Shanghai Anvil runner. This bytecode is not Logos output.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "push0_runtime",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "code": "0x5f5ff3",
+        "runtime": "0x5f5ff3"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "parity",
+    "id": "evm.ledger-transfer",
+    "title": "Ledger token moves balances only with allowance",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "erc20"
+    ],
+    "source_ref": "EIP-20",
+    "rationale": "Unauthorized transferFrom reverts. After approve, balances change and the return word is 1.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "ledger_transfer",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "balance_before": "1000",
+        "balance_after": "950",
+        "recipient_balance": "50",
+        "unauthorized_reverted": true,
+        "return_word": "0x0000000000000000000000000000000000000000000000000000000000000001"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "parity",
+    "id": "evm.token-true",
+    "title": "Token returning true",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "erc20"
+    ],
+    "source_ref": "EIP-20",
+    "rationale": "Canonical ABI true is a 32-byte 1.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "token_true",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "reverted": false,
+        "return_hex": "0x0000000000000000000000000000000000000000000000000000000000000001"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "parity",
+    "id": "evm.token-false",
+    "title": "Token returning false does not revert by itself",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "erc20"
+    ],
+    "source_ref": "EIP-20",
+    "rationale": "The token returns false without reverting. A caller that requires true must check the word. Logos does not do that yet.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "token_false",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "reverted": false,
+        "return_hex": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "parity",
+    "id": "evm.token-empty",
+    "title": "Token returning no data",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "erc20"
+    ],
+    "source_ref": "EIP-20",
+    "rationale": "Empty return data is observable. Logos has no documented optional-return policy; see the spec gap case.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "token_empty",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "reverted": false,
+        "return_hex": "0x"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "parity",
+    "id": "evm.token-revert",
+    "title": "Token revert is visible to the caller",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "erc20"
+    ],
+    "source_ref": "EIP-20",
+    "rationale": "eth_call reports the revert. A transaction would roll back.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "token_revert",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "reverted": true,
+        "message_contains": "revert"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "parity",
+    "id": "evm.token-one-byte",
+    "title": "One-byte return is not a bool word",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "erc20"
+    ],
+    "source_ref": "ethereum ABI",
+    "rationale": "A 1-byte success payload is malformed.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "token_one_byte",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "reverted": false,
+        "return_hex": "0x00"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "parity",
+    "id": "evm.token-thirty-one",
+    "title": "31-byte return is short",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "erc20"
+    ],
+    "source_ref": "ethereum ABI",
+    "rationale": "A bool word is 32 bytes.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "token_thirty_one",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "reverted": false
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "parity",
+    "id": "evm.token-thirty-three",
+    "title": "33-byte return is long",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "erc20"
+    ],
+    "source_ref": "ethereum ABI",
+    "rationale": "Extra return bytes are not a canonical bool.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "token_thirty_three",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "reverted": false
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "parity",
+    "id": "evm.token-dirty-bool",
+    "title": "Noncanonical bool word is returned as 2",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "erc20"
+    ],
+    "source_ref": "ethereum ABI",
+    "rationale": "The word 2 is not true. Callers must reject it.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "token_dirty_bool",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "reverted": false,
+        "contains": [
+          "2"
+        ]
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "parity",
+    "id": "evm.eoa-call",
+    "title": "EOA CALL success is not a transfer",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "erc20"
+    ],
+    "source_ref": "EIP-20",
+    "rationale": "Calling an account with no code returns empty success. That must not be treated as transferFrom.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "eoa_call",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "return_hex": "0x",
+        "code": "0x"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P1",
+    "class": "parity",
+    "id": "evm.reenter",
+    "title": "Adversarial token can callback",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "erc20"
+    ],
+    "source_ref": "ethereum",
+    "rationale": "The harness can see a callback. Logos emits no reentrancy guard; this fixture records the token behavior.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "reenter",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "callback_count": "1"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "spec",
+    "id": "evm.empty-return-policy",
+    "title": "Optional ERC-20 return policy is unspecified",
+    "category": "evm",
+    "tags": [
+      "erc20",
+      "spec-gap"
+    ],
+    "source_ref": "docs/quick-introduction.md",
+    "rationale": "The Logos docs do not say whether a token with no return data is success. OpenZeppelin-style callers reject it. This is a spec gap.",
+    "origin": "logos_spec",
+    "implementation_status": "spec_gap",
+    "phases": [
+      "anvil"
+    ],
+    "note": "SPEC_GAP: do not treat empty return as specified Logos behavior. The anvil fixture records the raw empty payload separately.",
+    "scenario": "token_empty"
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "parity",
+    "id": "evm.ledger-zero-amount",
+    "title": "Zero amount transferFrom reverts",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "erc20"
+    ],
+    "source_ref": "EIP-20",
+    "rationale": "Amount 0 is rejected and the balance stays 1000.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "ledger_zero_amount",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "reverted": true,
+        "balance_before": "1000",
+        "balance_after": "1000",
+        "message_contains": "zero amount"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "parity",
+    "id": "evm.ledger-insufficient-allowance",
+    "title": "Insufficient allowance reverts",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "erc20"
+    ],
+    "source_ref": "EIP-20",
+    "rationale": "approve of 1 cannot transfer 50. The balance stays 1000.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "ledger_insufficient_allowance",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "reverted": true,
+        "balance_before": "1000",
+        "balance_after": "1000",
+        "message_contains": "allowance"
+      }
+    }
+  },
+  {
+    "fixture_version": 1,
+    "baseline_commit": "ae7c13355b50db6d74a1837925e616003108ed79",
+    "priority": "P0",
+    "class": "parity",
+    "id": "evm.ledger-insufficient-balance",
+    "title": "Insufficient balance reverts",
+    "category": "evm",
+    "tags": [
+      "anvil",
+      "erc20"
+    ],
+    "source_ref": "EIP-20",
+    "rationale": "An allowance above the balance still cannot move 1001. The balance stays 1000.",
+    "origin": "ethereum_standard",
+    "implementation_status": "passes",
+    "phases": [
+      "anvil"
+    ],
+    "scenario": "ledger_insufficient_balance",
+    "expect": {
+      "anvil": {
+        "status": "ok",
+        "reverted": true,
+        "balance_before": "1000",
+        "balance_after": "1000",
+        "message_contains": "balance"
+      }
+    }
+  }
+]
