@@ -340,8 +340,7 @@ defmodule Logos.Conformance.EVMRunner do
           "--hardfork",
           Tooling.anvil_hardfork(),
           "--port",
-          Integer.to_string(port),
-          "--silent"
+          Integer.to_string(port)
         ]
       ])
 

@@ -23,7 +23,7 @@ Every fixture's `baseline_commit` is the HEAD above. The hashes are the dirty co
 ## Toolchain
 
 - Elixir 1.18.4, compiled with Erlang/OTP 28 (erts-16.2). `.tool-versions` pins Erlang 28.3.1 and Elixir 1.18.4-otp-28.
-- Foundry anvil 0.2.0 (`0ed43ce`, 2024-10-11). Anvil flags: `--hardfork shanghai`, ephemeral `--port`, `--silent`. No public RPC.
+- Local Foundry anvil 0.2.0 (`0ed43ce`, 2024-10-11). That version string is not a GitHub release asset, so CI installs Foundry `v1.8.5`. Anvil flags: `--hardfork shanghai` and an ephemeral `--port`. The Erlang port captures stderr. No public RPC.
 - solc 0.8.28+commit.7893614a when `solc` is on `PATH`. It is not a project dependency. Fixtures are compiled with `--evm-version shanghai`.
 - `excoveralls` 0.18 and `stream_data` 1.1, test-only.
 
