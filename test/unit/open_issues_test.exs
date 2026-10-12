@@ -299,6 +299,41 @@ defmodule OpenIssuesTest do
     assert hex =~ "01"
   end
 
+  test "comparisons push the right-hand value first" do
+    %{runtime_hex: hex} =
+      Compiler.compile_to_evm("""
+      Contract C
+      State
+        record { start_ts : Int = 1700000000 }
+      Clauses
+        Clause Release(): Effect
+          Provided That
+            now >= start_ts + Duration("7d")
+          Shall
+            Set { field: "start_ts", value: 1 }
+      End
+      """)
+
+    assert hex =~ "01421015"
+  end
+
+  test "unknown predicate names are a compile error" do
+    assert_raise RuntimeError, "unknown name: not_a_name", fn ->
+      Compiler.compile_to_evm("""
+      Contract C
+      State
+        record { x : Int = 0 }
+      Clauses
+        Clause A(): Effect
+          Provided That
+            not_a_name == 1
+          Shall
+            Set { field: "x", value: 1 }
+      End
+      """)
+    end
+  end
+
   test "issue 56 transferFrom compiles and jumps finish" do
     bin = A.assemble([{:push_u, 1}, {:jump_label, :L}, {:label, :L}, {:op, :STOP}])
     assert is_binary(bin)

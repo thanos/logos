@@ -475,7 +475,8 @@ defmodule Logos.Conformance.CorpusRunner do
 
   defp contains_ok?(needles, actual) do
     source =
-      actual["source"] || actual["hex"] || actual["return_hex"] || actual["message"] || ""
+      actual["source"] || actual["hex"] || actual["return_hex"] || actual["runtime_hex"] ||
+        actual["message"] || ""
 
     Enum.all?(needles, &String.contains?(source, &1))
   end

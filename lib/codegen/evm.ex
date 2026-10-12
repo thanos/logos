@@ -282,9 +282,17 @@ defmodule Logos.Codegen.EVM do
         other -> raise "Unsupported comparator #{other}"
       end
 
-    {lhs_code ++ rhs_code ++ comp, rest}
+    {rhs_code ++ lhs_code ++ comp, rest}
   rescue
-    _ -> raise "Bad predicate atom near: #{Enum.join(tokens, " ")}"
+    exception in RuntimeError ->
+      if String.starts_with?(Exception.message(exception), "unknown name:") do
+        reraise exception, __STACKTRACE__
+      else
+        raise "Bad predicate atom near: #{Enum.join(tokens, " ")}"
+      end
+
+    _ ->
+      raise "Bad predicate atom near: #{Enum.join(tokens, " ")}"
   end
 
   # Split tokens into LHS, comparator, RHS, rest (rest begins at next 'and'/'or' or end)
@@ -364,9 +372,11 @@ defmodule Logos.Codegen.EVM do
               {i, ""} = Integer.parse(tok)
               [{:push_u, i}]
 
+            tok in ["true", "false"] ->
+              [{:push_u, if(tok == "true", do: 1, else: 0)}]
+
             true ->
-              # unknown symbol -> 0 (defensive)
-              [{:push_u, 0}]
+              raise "unknown name: #{tok}"
           end
       end
 
@@ -656,12 +666,12 @@ defmodule Logos.Codegen.EVM do
 
   # ---- hashing / encoding helpers -------------------------------------------
   defp keccak4(sig) when is_binary(sig) do
-    <<a, b, c, d, _::binary>> = :crypto.hash(:sha3_256, sig)
+    <<a, b, c, d, _::binary>> = Logos.Keccak.hash(sig)
     :binary.decode_unsigned(<<a, b, c, d>>)
   end
 
   defp keccak256_int(s) when is_binary(s) do
-    :crypto.hash(:sha3_256, s) |> :binary.decode_unsigned()
+    Logos.Keccak.hash(s) |> :binary.decode_unsigned()
   end
 
   defp evm_encode(true), do: 1

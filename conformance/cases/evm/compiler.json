@@ -39,8 +39,7 @@
     "source_ref": "docs/quick-introduction.md#3",
     "rationale": "An unknown predicate must not become PUSH 0.",
     "origin": "logos_spec",
-    "implementation_status": "known_failure",
-    "known_failure_id": "KF-EVM-UNKNOWN-ZERO",
+    "implementation_status": "passes",
     "phases": [
       "evm"
     ],
@@ -54,12 +53,7 @@
         "forbids": "push0_substitution"
       }
     },
-    "note": "Latent: parse_term pushes 0. Blocked until the header assembles.",
-    "observed": {
-      "evm": {
-        "status": "ok"
-      }
-    }
+    "note": "An unknown predicate name is a compile error."
   },
   {
     "fixture_version": 1,
@@ -141,7 +135,7 @@
       "blocked"
     ],
     "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
-    "rationale": "now = deadline succeeds when the rule is >=. KF-EVM-CMP-ORDER currently inverts this.",
+    "rationale": "now = deadline succeeds when the rule is >=. The comparison pushes the deadline first so LT sees now on top.",
     "origin": "logos_spec",
     "implementation_status": "passes",
     "phases": [
@@ -157,7 +151,7 @@
         "storage_unchanged": false
       }
     },
-    "note": "now = deadline succeeds when the rule is >=. KF-EVM-CMP-ORDER currently inverts this."
+    "note": "now = deadline succeeds when the rule is >=. The comparison pushes the deadline first so LT sees now on top."
   },
   {
     "fixture_version": 1,

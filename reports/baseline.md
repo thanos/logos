@@ -35,12 +35,12 @@ Every fixture's `baseline_commit` is the HEAD above. The hashes are the dirty co
 - `lib/codegen/evm/assembler.ex` unused `code`, unused `pos`, unused `@op`.
 - `lib/codegen/solidity.ex:128` single-quoted charlist.
 
-`mix test --seed 4242` exited 0: 1 doctest, 5 properties, 145 tests, 0 failures, 1 excluded (`nightly`). With solc and Anvil on `PATH`, the corpus counts were:
+`mix test --seed 4242` exited 0: 1 doctest, 5 properties, 147 tests, 0 failures, 1 excluded (`nightly`). With solc and Anvil on `PATH`, the corpus counts were:
 
 | Status | Count |
 | --- | --- |
-| PASS | 85 |
-| KNOWN_FAILURE | 18 |
+| PASS | 87 |
+| KNOWN_FAILURE | 16 |
 | SKIPPED | 6 |
 
 `BLOCKED` is 0. `compile_to_evm/1` returns bytecode. Jumps terminate. Nested `All`, compound durations, and Solidity `transferFrom` match their expects.

@@ -30,4 +30,4 @@ Credo and Sobelow are not dependencies. This run did not execute them.
 | Drop `return_hex` from the ERC-20 double runner | fail | went red |
 | Keccak padding byte `0x01` changed to SHA3 `0x06` | fail | went red |
 
-`compile_to_evm/1` now returns bytecode, so comparison code and jump layout are executed. Selectors are still NIST SHA3-256, and `LT`/`GT` operand order is still inverted. Those stay `KNOWN_FAILURE`.
+`compile_to_evm/1` returns bytecode. Selectors and topics are Keccak-256, comparisons push the right-hand value first, and an unknown predicate name is a compile error. Dispatcher `DUP1`, call argument order, and the remaining parser crashes stay `KNOWN_FAILURE`.
