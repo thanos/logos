@@ -1,7 +1,7 @@
 defmodule EVMAssemblerTest do
   use ExUnit.Case, async: false
 
-  alias Logos.Conformance.{CorpusRunner, Watchdog}
+  alias Logos.Conformance.CorpusRunner
   alias Logos.EVM.Assembler, as: A
 
   test "opcode-map case lists every atom in @opcode_map" do
@@ -33,18 +33,15 @@ defmodule EVMAssemblerTest do
   end
 
   @tag timeout: 5_000
-  test "jump labels are killed by the watchdog instead of hanging the suite" do
-    assert {:timeout, 800} =
-             Watchdog.run(
-               fn ->
-                 A.assemble([
-                   {:push_u, 1},
-                   {:jump_label, :L},
-                   {:label, :L},
-                   {:op, :STOP}
-                 ])
-               end,
-               800
-             )
+  test "jump labels assemble and land on the JUMPDEST" do
+    bin =
+      A.assemble([
+        {:push_u, 1},
+        {:jump_label, :L},
+        {:label, :L},
+        {:op, :STOP}
+      ])
+
+    assert bin == <<0x60, 0x01, 0x60, 0x05, 0x56, 0x5B, 0x00>>
   end
 end

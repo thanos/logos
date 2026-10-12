@@ -67,12 +67,54 @@ defmodule Logos.Codegen.EVM do
 
     header = [{:push_u, 0}, {:op, :CALLDATALOAD}, {:push_u, 0xE0}, {:op, :SHR}]
 
-    A.assemble(header ++ dispatch ++ clause_blocks ++ [{:op, :STOP}])
+    program = List.flatten(header ++ dispatch ++ clause_blocks ++ [{:op, :STOP}])
+    {rewritten, pool} = lift_pool(program)
+    code = assemble_with_pool(rewritten, pool)
+    code
+  end
+
+  defp lift_pool(instrs) do
+    {rev, pool} =
+      Enum.reduce(instrs, {[], []}, fn
+        {:data_ref, bin}, {acc, pool} ->
+          {[{:pool_slot, length(pool)} | acc], pool ++ [bin]}
+
+        other, {acc, pool} ->
+          {[other | acc], pool}
+      end)
+
+    {Enum.reverse(rev), pool}
+  end
+
+  defp assemble_with_pool(instrs, []) do
+    A.assemble(instrs)
+  end
+
+  defp assemble_with_pool(instrs, pool) do
+    skeleton = A.assemble(fill_pool(instrs, pool, 0))
+    code = A.assemble(fill_pool(instrs, pool, byte_size(skeleton)))
+    code <> IO.iodata_to_binary(pool)
+  end
+
+  defp fill_pool(instrs, pool, base) do
+    {offsets, _} =
+      pool
+      |> Enum.with_index()
+      |> Enum.reduce({%{}, base}, fn {bin, i}, {map, at} ->
+        {Map.put(map, i, at), at + byte_size(bin)}
+      end)
+
+    Enum.map(instrs, fn
+      {:pool_slot, i} -> {:push, <<Map.fetch!(offsets, i)::16>>}
+      other -> other
+    end)
   end
 
   defp abi_type(%{type: :uint256}), do: "uint256"
   defp abi_type(%{type: :address}), do: "address"
   defp abi_type(%{type: :bool}), do: "bool"
+  defp abi_type(%{type: :string}), do: "string"
+  defp abi_type(%{type: :bytes}), do: "bytes"
 
   # ---- Clause compilation with param decoding -------------------------------
   defp compile_clause(
@@ -130,13 +172,15 @@ defmodule Logos.Codegen.EVM do
     need = 4 + 32 * n
     ok_lbl = uniq(:abiok)
 
+    short_lbl = uniq(:revert_short)
+
     size_check = [
       {:op, :CALLDATASIZE},
       {:push_u, need},
       # cds < need ?
       {:op, :LT},
       # if too small -> revert
-      {:jumpi_label, :_revert_short},
+      {:jumpi_label, short_lbl},
       {:label, ok_lbl}
     ]
 
@@ -149,7 +193,7 @@ defmodule Logos.Codegen.EVM do
 
     decoder = [
       size_check,
-      {:label, :_revert_short},
+      {:label, short_lbl},
       {:op, :PUSH0},
       {:op, :PUSH0},
       {:op, :REVERT},
@@ -172,8 +216,11 @@ defmodule Logos.Codegen.EVM do
       normalized
       |> Enum.map(&String.trim/1)
       |> Enum.join(" and ")
+      |> String.replace("(", " ( ")
+      |> String.replace(")", " ) ")
       |> String.replace(~r/\s+/, " ")
       |> String.split(" ")
+      |> Enum.reject(&(&1 == ""))
 
     {stack, op} = parse_bool_expr(tokens, layout, env)
     stack ++ op
@@ -270,16 +317,10 @@ defmodule Logos.Codegen.EVM do
     do_fold_arith(code, rest, layout, env)
   end
 
-  defp do_fold_arith(code_acc, [op, int | rest], layout, env) when op in ["+", "-"] do
-    # int must be integer literal (already duration-normalized)
-    amt =
-      case Integer.parse(int) do
-        {i, ""} -> i
-        _ -> raise "Expected integer seconds after #{op}, got #{int}"
-      end
-
-    op_code = [{:push_u, amt}] ++ if op == "+", do: [{:op, :ADD}], else: [{:op, :SUB}]
-    do_fold_arith(code_acc ++ op_code, rest, layout, env)
+  defp do_fold_arith(code_acc, [op | rest], layout, env) when op in ["+", "-"] do
+    {rhs, rest2} = parse_term(rest, layout, env)
+    arith = if op == "+", do: [{:op, :ADD}], else: [{:op, :SUB}]
+    do_fold_arith(code_acc ++ rhs ++ arith, rest2, layout, env)
   end
 
   defp do_fold_arith(code_acc, rest, _layout, _env) do
@@ -290,6 +331,11 @@ defmodule Logos.Codegen.EVM do
       # be permissive
       _ -> code_acc
     end
+  end
+
+  defp parse_term(["(" | rest], layout, env) do
+    {inner, rest} = take_group(rest, 1, [])
+    {compile_value_expr(inner, layout, env), rest}
   end
 
   # term := now | timestamp | block.timestamp | <state-field> | <param> | <int>
@@ -329,17 +375,36 @@ defmodule Logos.Codegen.EVM do
 
   defp parse_term([], _layout, _env), do: {[{:push_u, 0}], []}
 
+  defp take_group([")" | rest], 1, acc), do: {Enum.reverse(acc), rest}
+  defp take_group(["(" | rest], depth, acc), do: take_group(rest, depth + 1, ["(" | acc])
+  defp take_group([")" | rest], depth, acc), do: take_group(rest, depth - 1, [")" | acc])
+  defp take_group([tok | rest], depth, acc), do: take_group(rest, depth, [tok | acc])
+
   # ---- Effects ---------------------------------------------------------------
   defp compile_effect(_c, %Eff{op: :noop}, _layout, _env), do: []
 
   defp compile_effect(c, %Eff{op: :all, args: list}, layout, env),
     do: Enum.flat_map(list, &compile_effect(c, &1, layout, env))
 
-  # Emit: LOG2 with [keccak("Emitted(string)"), keccak(eventName)], no data
-  defp compile_effect(_c, %Eff{op: :emit, args: %{"event" => ev_name}}, _layout, _env) do
+  # Emit: topics plus a CODECOPY of the JSON payload from the code-end string pool.
+  defp compile_effect(_c, %Eff{op: :emit, args: args}, _layout, _env) do
+    ev_name = to_string(args["event"])
+    payload = emit_payload(args["data"])
+    json = if is_map(payload), do: Logos.Data.encode(payload), else: to_string(payload)
+    extra = payload |> address_topics() |> Enum.take(2)
     sig = keccak256_int("Emitted(string)")
     name = keccak256_int(ev_name)
-    [{:op, :PUSH0}, {:op, :PUSH0}, {:push_u, sig}, {:push_u, name}, {:op, :LOG2}]
+
+    [
+      {:push_u, byte_size(json)},
+      {:data_ref, json},
+      {:op, :PUSH0},
+      {:op, :CODECOPY},
+      {:op, :PUSH0},
+      {:push_u, byte_size(json)},
+      {:push_u, sig},
+      {:push_u, name}
+    ] ++ Enum.map(extra, &{:push_u, &1}) ++ [{:op, log_op(length(extra))}]
   end
 
   # ERC-20 transferFrom(from,to,amount) – args can be literals OR params
@@ -347,7 +412,7 @@ defmodule Logos.Codegen.EVM do
     sel_transferFrom = 0x23B872DD
 
     token_code = push_addr_or_param(Map.fetch!(kv, "asset"), env)
-    from_code = push_addr_or_param(Map.fetch!(kv, "from"), env)
+    from_code = push_from(Map.get(kv, "from"), env)
     to_code = push_addr_or_param(Map.fetch!(kv, "to"), env)
     amount_code = push_uint_or_param(Map.fetch!(kv, "amount"), env)
 
@@ -357,26 +422,22 @@ defmodule Logos.Codegen.EVM do
     [
       # selector @ [0..3]
       {:push_u, sel_transferFrom},
-      {:op, :PUSH1},
-      <<0xE0>>,
+      {:push_u, 0xE0},
       {:op, :SHL},
       {:op, :PUSH0},
       {:op, :MSTORE},
 
       # arg1 from @ [32..63]
       from_code,
-      {:op, :PUSH1},
-      <<0x20>>,
+      {:push_u, 0x20},
       {:op, :MSTORE},
       # arg2 to   @ [64..95]
       to_code,
-      {:op, :PUSH1},
-      <<0x40>>,
+      {:push_u, 0x40},
       {:op, :MSTORE},
       # arg3 amt  @ [96..127]
       amount_code,
-      {:op, :PUSH1},
-      <<0x60>>,
+      {:push_u, 0x60},
       {:op, :MSTORE},
 
       # CALL(gas, token, 0, in=0, size=100, out=0, outsize=32)
@@ -384,19 +445,16 @@ defmodule Logos.Codegen.EVM do
       token_code,
       {:op, :PUSH0},
       {:op, :PUSH0},
-      {:op, :PUSH1},
-      <<0x64>>,
+      {:push_u, 0x64},
       {:op, :PUSH0},
-      {:op, :PUSH1},
-      <<0x20>>,
+      {:push_u, 0x20},
       {:op, :CALL},
       {:op, :DUP1},
       {:op, :ISZERO},
       {:jumpi_label, fail_lbl},
       {:op, :POP},
       {:op, :RETURNDATASIZE},
-      {:op, :PUSH1},
-      <<0x20>>,
+      {:push_u, 0x20},
       {:op, :LT},
       {:jumpi_label, done_lbl},
       {:op, :PUSH0},
@@ -407,7 +465,7 @@ defmodule Logos.Codegen.EVM do
       {:op, :ISZERO},
       {:jumpi_label, fail_lbl},
       {:label, done_lbl},
-      [],
+      transfer_log(kv),
       {:label, fail_lbl},
       {:op, :PUSH0},
       {:op, :PUSH0},
@@ -439,41 +497,73 @@ defmodule Logos.Codegen.EVM do
   end
 
   # ---- Helpers: durations normalization -------------------------------------
-  defp normalize_durations(line) do
-    # Duration("7d") / Duration('7d') / Duration( " 7h " )
-    s1 =
-      Regex.replace(
-        ~r/Duration\(\s*["']\s*(\d+)\s*([smhdw])\s*["']\s*\)/i,
-        line,
-        fn _m, n, u -> Integer.to_string(sec(n, u)) end
-      )
+  defp normalize_durations(line), do: Logos.Duration.rewrite(line)
 
-    # bare 7d / 12h / 30m / 45s / 2w
-    Regex.replace(
-      ~r/\b(\d+)\s*([smhdw])\b/i,
-      s1,
-      fn _m, n, u -> Integer.to_string(sec(n, u)) end
-    )
+  defp push_from(nil, _env), do: [{:op, :CALLER}]
+  defp push_from("CALLER", _env), do: [{:op, :CALLER}]
+  defp push_from({:raw, "CALLER"}, _env), do: [{:op, :CALLER}]
+  defp push_from(other, env), do: push_addr_or_param(other, env)
+
+  defp log_op(0), do: :LOG2
+  defp log_op(1), do: :LOG3
+  defp log_op(_), do: :LOG4
+
+  defp emit_payload(nil), do: %{}
+  defp emit_payload(data), do: data |> to_string() |> Logos.Data.decode()
+
+  defp address_topics(map) when is_map(map) do
+    map
+    |> Enum.sort_by(fn {key, _} -> to_string(key) end)
+    |> Enum.flat_map(fn {_key, value} ->
+      case value do
+        "0x" <> hex when byte_size(hex) == 40 ->
+          case Base.decode16(hex, case: :mixed) do
+            {:ok, bin} -> [:binary.decode_unsigned(bin)]
+            _ -> []
+          end
+
+        _ ->
+          []
+      end
+    end)
   end
 
-  defp sec(n, u) do
-    {num, _} = Integer.parse("#{n}")
+  defp address_topics(_), do: []
 
-    case String.downcase("#{u}") do
-      "s" -> num
-      "m" -> num * 60
-      "h" -> num * 3600
-      "d" -> num * 86400
-      "w" -> num * 604_800
-      _ -> num
+  defp transfer_log(kv) do
+    [
+      {:op, :PUSH0},
+      {:op, :PUSH0},
+      {:push_u, keccak256_int("Transfer")},
+      {:push_u, topic_word(kv["asset"])},
+      {:push_u, topic_word(Map.get(kv, "from", "CALLER"))},
+      {:op, :LOG3}
+    ]
+  end
+
+  defp topic_word(<<"0x", hex::binary>> = value) do
+    case Base.decode16(hex, case: :mixed) do
+      {:ok, bin} -> :binary.decode_unsigned(bin)
+      _ -> keccak256_int(value)
     end
   end
+
+  defp topic_word(other), do: keccak256_int(to_string(other))
 
   # ---- Helpers: push immediates or load params ------------------------------
   defp push_uint_or_param(v, env) do
     case v do
       i when is_integer(i) ->
         [{:push_u, i}]
+
+      {:decimal, coef, _scale} ->
+        [{:push_u, coef}]
+
+      {:some, inner} ->
+        push_uint_or_param(inner, env)
+
+      :none ->
+        [{:push_u, 0}]
 
       true ->
         [{:push_u, 1}]
@@ -513,8 +603,20 @@ defmodule Logos.Codegen.EVM do
 
   defp load_param(name, env) do
     case env[name] do
-      {:cd, off, _type} -> [{:push_u, off}, {:op, :CALLDATALOAD}]
-      nil -> [{:push_u, 0}]
+      {:cd, off, type} when type in [:string, :bytes] ->
+        [
+          {:push_u, off},
+          {:op, :CALLDATALOAD},
+          {:push_u, 4},
+          {:op, :ADD},
+          {:op, :CALLDATALOAD}
+        ]
+
+      {:cd, off, _type} ->
+        [{:push_u, off}, {:op, :CALLDATALOAD}]
+
+      nil ->
+        [{:push_u, 0}]
     end
   end
 
@@ -565,6 +667,9 @@ defmodule Logos.Codegen.EVM do
   defp evm_encode(true), do: 1
   defp evm_encode(false), do: 0
   defp evm_encode(i) when is_integer(i), do: i
+  defp evm_encode({:decimal, coef, _scale}), do: coef
+  defp evm_encode({:some, inner}), do: evm_encode(inner)
+  defp evm_encode(:none), do: 0
   defp evm_encode({:raw, _}), do: 0
   defp evm_encode(_), do: 0
 

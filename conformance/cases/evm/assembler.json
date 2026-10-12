@@ -663,7 +663,7 @@
     "priority": "P0",
     "class": "parity",
     "id": "asm.unknown-shr",
-    "title": "SHR is reported as an unknown opcode",
+    "title": "SHR is Yellow Paper opcode 0x1c",
     "rationale": "The codegen emits SHR, but the assembler must not invent a byte for an unlisted opcode.",
     "origin": "ethereum_standard",
     "implementation_status": "passes",
@@ -674,9 +674,8 @@
     ],
     "expect": {
       "assemble": {
-        "status": "error",
-        "exception": "RuntimeError",
-        "message": "Unknown opcode: :SHR"
+        "status": "ok",
+        "hex": "0x1c"
       }
     },
     "category": "evm",
@@ -694,7 +693,7 @@
     "priority": "P0",
     "class": "current",
     "id": "asm.unknown-shl",
-    "title": "SHL is an unknown opcode",
+    "title": "SHL is Yellow Paper opcode 0x1b",
     "rationale": "Observed assembler behavior for an opcode the codegen emits.",
     "origin": "observed_elixir",
     "implementation_status": "passes",
@@ -705,8 +704,8 @@
     ],
     "expect": {
       "assemble": {
-        "status": "error",
-        "message": "Unknown opcode: :SHL"
+        "status": "ok",
+        "hex": "0x1b"
       }
     },
     "category": "evm",
@@ -724,7 +723,7 @@
     "priority": "P0",
     "class": "current",
     "id": "asm.unknown-gas",
-    "title": "GAS is an unknown opcode",
+    "title": "GAS is Yellow Paper opcode 0x5a",
     "rationale": "Observed assembler behavior for an opcode the codegen emits.",
     "origin": "observed_elixir",
     "implementation_status": "passes",
@@ -735,8 +734,8 @@
     ],
     "expect": {
       "assemble": {
-        "status": "error",
-        "message": "Unknown opcode: :GAS"
+        "status": "ok",
+        "hex": "0x5a"
       }
     },
     "category": "evm",
@@ -875,9 +874,7 @@
     "title": "Forward jump assembles under the watchdog",
     "rationale": "Historic left_pad recursion must finish and land on JUMPDEST.",
     "origin": "ethereum_standard",
-    "implementation_status": "known_failure",
-    "known_failure_id": "KF-ASM-LEFT-PAD",
-    "timeout_ms": 800,
+    "implementation_status": "passes",
     "instructions": [
       {
         "push_u": "1"
@@ -895,11 +892,6 @@
     "expect": {
       "assemble": {
         "status": "ok"
-      }
-    },
-    "observed": {
-      "assemble": {
-        "status": "timeout"
       }
     },
     "category": "evm",
@@ -920,9 +912,7 @@
     "title": "JUMPI placeholder size matches the encoding",
     "rationale": "Pass 1 currently counts 3 bytes and pass 2 writes 4. The hang masks the measurement.",
     "origin": "ethereum_standard",
-    "implementation_status": "known_failure",
-    "known_failure_id": "KF-ASM-JUMP-WIDTH",
-    "timeout_ms": 800,
+    "implementation_status": "passes",
     "instructions": [
       {
         "push_u": "1"
@@ -940,15 +930,11 @@
     "expect": {
       "assemble": {
         "status": "ok",
-        "byte_size": "6"
+        "byte_size": "7",
+        "hex": "0x60016005575b00"
       }
     },
-    "observed": {
-      "assemble": {
-        "status": "timeout"
-      }
-    },
-    "note": "Normative size is PUSH1 imm + PUSH2 addr + JUMPI + JUMPDEST + STOP once left_pad returns. 6 bytes assumes the pushed 1 is PUSH1. Re-measure if the jump width fix changes the address width.",
+    "note": "PUSH1 1, PUSH1 target, JUMPI, JUMPDEST, STOP.",
     "category": "evm",
     "tags": [
       "assembler"
@@ -999,6 +985,12 @@
         "op": "GT"
       },
       {
+        "op": "SHL"
+      },
+      {
+        "op": "SHR"
+      },
+      {
         "op": "EQ"
       },
       {
@@ -1012,6 +1004,9 @@
       },
       {
         "op": "NOT"
+      },
+      {
+        "op": "CALLER"
       },
       {
         "op": "CALLDATALOAD"
@@ -1056,6 +1051,9 @@
         "op": "SSTORE"
       },
       {
+        "op": "GAS"
+      },
+      {
         "op": "JUMP"
       },
       {
@@ -1089,7 +1087,16 @@
         "op": "LOG2"
       },
       {
+        "op": "LOG3"
+      },
+      {
+        "op": "LOG4"
+      },
+      {
         "op": "CALL"
+      },
+      {
+        "op": "RETURN"
       },
       {
         "op": "REVERT"
@@ -1101,8 +1108,8 @@
     "expect": {
       "assemble": {
         "status": "ok",
-        "hex": "0x000102030410111415161719353637393d3e404243505152545556575b5f60808190a0a1a2f1fdfe",
-        "byte_size": "40"
+        "hex": "0x000102030410111b1c141516171933353637393d3e40424350515254555a56575b5f60808190a0a1a2a3a4f1f3fdfe",
+        "byte_size": "47"
       }
     }
   },
@@ -1292,7 +1299,7 @@
     "title": "Forward jump lands on JUMPDEST at PC 255",
     "rationale": "Address 255 still fits in PUSH1. Pass 1 and pass 2 must agree, and byte 255 must be JUMPDEST.",
     "origin": "ethereum_standard",
-    "implementation_status": "known_failure",
+    "implementation_status": "passes",
     "instructions": [
       {
         "push_u": "255"
@@ -2063,13 +2070,6 @@
         "hex": "0x60ff60ff56000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005b00",
         "byte_size": "257"
       }
-    },
-    "known_failure_id": "KF-ASM-LEFT-PAD",
-    "timeout_ms": 800,
-    "observed": {
-      "assemble": {
-        "status": "timeout"
-      }
     }
   },
   {
@@ -2086,10 +2086,10 @@
     ],
     "class": "spec",
     "id": "asm.jumpdest-at-256",
-    "title": "Forward jump lands on JUMPDEST at PC 256",
-    "rationale": "Address 256 requires PUSH2. The recorded PC must be 256, not the pass-1 estimate.",
+    "title": "Forward jump uses PUSH1 when the destination fits",
+    "rationale": "A 3-byte jump puts this JUMPDEST at PC 255, so the immediate is PUSH1 0xff.",
     "origin": "ethereum_standard",
-    "implementation_status": "known_failure",
+    "implementation_status": "passes",
     "instructions": [
       {
         "push_u": "1"
@@ -2857,15 +2857,8 @@
     "expect": {
       "assemble": {
         "status": "ok",
-        "hex": "0x600161010056000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005b00",
-        "byte_size": "258"
-      }
-    },
-    "known_failure_id": "KF-ASM-LEFT-PAD",
-    "timeout_ms": 800,
-    "observed": {
-      "assemble": {
-        "status": "timeout"
+        "hex": "0x600160ff56000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005b00",
+        "byte_size": "257"
       }
     }
   },
@@ -2886,7 +2879,7 @@
     "title": "Backward jump targets an earlier JUMPDEST",
     "rationale": "The label is behind the jump. The assembled immediate is that earlier PC.",
     "origin": "ethereum_standard",
-    "implementation_status": "known_failure",
+    "implementation_status": "passes",
     "instructions": [
       {
         "label": "BACK"
@@ -2906,13 +2899,6 @@
         "status": "ok",
         "hex": "0x5b005f600056",
         "byte_size": "6"
-      }
-    },
-    "known_failure_id": "KF-ASM-LEFT-PAD",
-    "timeout_ms": 800,
-    "observed": {
-      "assemble": {
-        "status": "timeout"
       }
     }
   }

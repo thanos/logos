@@ -145,6 +145,8 @@ defmodule Logos.Codegen.Solidity do
   defp sol_param_type(:address), do: "address"
   defp sol_param_type(:bool), do: "bool"
   defp sol_param_type(:uint256), do: "uint256"
+  defp sol_param_type(:string), do: "string"
+  defp sol_param_type(:bytes), do: "bytes"
   defp sol_param_type(_), do: "uint256"
 
   # ------------------------- predicates & effects -----------------------------
@@ -152,6 +154,7 @@ defmodule Logos.Codegen.Solidity do
   # Very light rewrite: AND/OR/NOT to Solidity, keep existing operators.
   defp compile_pred(_c, p) when is_binary(p) do
     p
+    |> Logos.Duration.rewrite_solidity()
     |> replace_word("and", "&&")
     |> replace_word("or", "||")
     |> replace_word("not", "!")
@@ -171,9 +174,11 @@ defmodule Logos.Codegen.Solidity do
     |> Enum.join()
   end
 
-  defp compile_effect(_c, %Eff{op: :emit, args: %{"event" => ev}}) do
-    # data payload is ignored in this simple Solidity backend
-    ["    emit Emitted(", lit(ev), ", \"{}\");\n"] |> IO.iodata_to_binary()
+  defp compile_effect(_c, %Eff{op: :emit, args: %{"event" => ev}} = eff) do
+    data = Map.get(eff.args, "data", "{}")
+    payload = data |> to_string() |> Logos.Data.decode()
+    json = if is_map(payload), do: Logos.Data.encode(payload), else: to_string(payload)
+    ["    emit Emitted(", lit(ev), ", ", lit(json), ");\n"] |> IO.iodata_to_binary()
   end
 
   defp compile_effect(_c, %Eff{op: :set, args: %{"field" => f, "value" => v}}) do
@@ -196,15 +201,26 @@ defmodule Logos.Codegen.Solidity do
   # For Solidity backend, we don't actually call tokens—just record intent.
   defp compile_effect(_c, %Eff{op: :transfer, args: args}) when is_map(args) do
     asset = Map.get(args, "asset", "0x0000000000000000000000000000000000000000")
-    from_ = Map.get(args, "from", "0x0000000000000000000000000000000000000000")
+    from_ = Map.get(args, "from")
     to_ = Map.get(args, "to", "0x0000000000000000000000000000000000000000")
     amount = Map.get(args, "amount", 0)
+    from_expr = if from_ in [nil, "CALLER"], do: "msg.sender", else: solidity_addr_for_event(from_)
 
     [
+      "    (bool ok, ) = ",
+      solidity_addr_for_event(asset),
+      ".call(abi.encodeWithSignature(\"transferFrom(address,address,uint256)\", ",
+      from_expr,
+      ", ",
+      solidity_addr_for_event(to_),
+      ", ",
+      lit(amount),
+      "));\n",
+      "    require(ok, \"transferFrom\");\n",
       "    emit TransferNote(",
       solidity_addr_for_event(asset),
       ", ",
-      solidity_addr_for_event(from_),
+      from_expr,
       ", ",
       solidity_addr_for_event(to_),
       ", ",
@@ -234,8 +250,9 @@ defmodule Logos.Codegen.Solidity do
   defp lit(i) when is_integer(i), do: Integer.to_string(i)
   defp lit(<<"0x", _::binary>> = a), do: a
   defp lit({:raw, s}) when is_binary(s), do: s
-  defp lit({:some, _}), do: "true"
-  defp lit(:none), do: "false"
+  defp lit({:some, inner}), do: lit(inner)
+  defp lit(:none), do: "0"
+  defp lit({:decimal, coef, _scale}), do: Integer.to_string(coef)
   defp lit(s) when is_binary(s), do: "\"" <> String.replace(s, "\"", "\\\"") <> "\""
   defp lit(other), do: "\"" <> String.replace(inspect(other), "\"", "\\\"") <> "\""
 

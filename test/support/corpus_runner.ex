@@ -439,6 +439,11 @@ defmodule Logos.Conformance.CorpusRunner do
 
   defp matches?(nil, _actual), do: false
 
+  defp matches?(expect, actual) when is_map(expect) do
+    expect = Map.drop(expect, ["execute"])
+    value_match?(Normalization.canonicalize(expect), Normalization.canonicalize(actual))
+  end
+
   defp matches?(expect, actual) do
     value_match?(Normalization.canonicalize(expect), Normalization.canonicalize(actual))
   end

@@ -16,6 +16,7 @@ defmodule Logos.AST do
       parties: %{},
       defs: %{},
       state: %{},
+      types: %{},
       clauses: [],
       term: nil,
       law: nil,
@@ -27,6 +28,7 @@ defmodule Logos.AST do
             parties: Logos.AST.party_map(),
             defs: Logos.AST.defs_map(),
             state: Logos.AST.state_map(),
+            types: map(),
             clauses: [Logos.AST.Clause.t()],
             term: String.t() | nil,
             law: String.t() | nil,
@@ -46,7 +48,7 @@ defmodule Logos.AST do
     @enforce_keys [:name, :params, :provided, :shall]
     defstruct [:name, params: [], provided: [], shall: nil, remedies: nil]
 
-    @type param_type :: :uint256 | :address | :bool
+    @type param_type :: :uint256 | :address | :bool | :string | :bytes
     @type param :: %{name: String.t(), type: param_type}
     @type t :: %__MODULE__{
             name: String.t(),
@@ -64,7 +66,7 @@ defmodule Logos.AST do
     Supported ops:
       * `:noop`
       * `:set`       — `%{ "field" => String.t(), "value" => any }`
-      * `:emit`      — `%{ "event" => String.t(), "data" => map | string }` (bytecode backend logs topics only)
+      * `:emit`      — `%{ "event" => String.t(), "data" => map | string }` (bytecode logs topics and JSON data)
       * `:all`       — list of child effects
       * `:if`        — `%{ "cond" => String.t(), "then" => Eff, "else" => Eff }`
       * `:transfer`  — ERC-20 transferFrom (pure bytecode backend) with %{asset, from, to, amount}

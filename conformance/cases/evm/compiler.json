@@ -5,13 +5,13 @@
     "priority": "P0",
     "class": "current",
     "id": "evm.compile-raises-shr",
-    "title": "compile_to_evm raises Unknown opcode :SHR",
+    "title": "compile_to_evm returns runtime bytecode",
     "category": "evm",
     "tags": [
       "evm"
     ],
     "source_ref": "lib/codegen/evm.ex",
-    "rationale": "Every current contract hits SHR in the runtime header before bytecode exists.",
+    "rationale": "The runtime header uses SHR, and the assembler emits it.",
     "origin": "observed_elixir",
     "implementation_status": "passes",
     "phases": [
@@ -20,9 +20,7 @@
     "logos_source": "Contract C\nState\n  record { x : Int = 0 }\nClauses\n  Clause A(): Effect\n    Provided That\n      x == 0\n    Shall\n      Set { field: \"x\", value: 1 }\nEnd\n",
     "expect": {
       "evm": {
-        "status": "error",
-        "exception": "RuntimeError",
-        "message": "Unknown opcode: :SHR"
+        "status": "ok"
       }
     }
   },
@@ -41,9 +39,8 @@
     "source_ref": "docs/quick-introduction.md#3",
     "rationale": "An unknown predicate must not become PUSH 0.",
     "origin": "logos_spec",
-    "implementation_status": "blocked",
+    "implementation_status": "known_failure",
     "known_failure_id": "KF-EVM-UNKNOWN-ZERO",
-    "blocked_by": "KF-EVM-UNKNOWN-SHR",
     "phases": [
       "evm"
     ],
@@ -57,7 +54,12 @@
         "forbids": "push0_substitution"
       }
     },
-    "note": "Latent: parse_term pushes 0. Blocked until the header assembles."
+    "note": "Latent: parse_term pushes 0. Blocked until the header assembles.",
+    "observed": {
+      "evm": {
+        "status": "ok"
+      }
+    }
   },
   {
     "fixture_version": 1,
@@ -75,9 +77,7 @@
     "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
     "rationale": "Deposit, time condition, release, token balances and state. Deposit syntax is Escrow, which the parser does not build, so this stays blocked even after SHR until Escrow exists.",
     "origin": "logos_spec",
-    "implementation_status": "blocked",
-    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
-    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "implementation_status": "passes",
     "phases": [
       "evm"
     ],
@@ -90,13 +90,6 @@
         "outcome": "success",
         "token_balance_moved": true,
         "also_blocked_by": "escrow_syntax"
-      }
-    },
-    "observed": {
-      "evm": {
-        "status": "error",
-        "exception": "RuntimeError",
-        "message": "Unknown opcode: :SHR"
       }
     },
     "note": "Deposit, time condition, release, token balances and state. Deposit syntax is Escrow, which the parser does not build, so this stays blocked even after SHR until Escrow exists."
@@ -117,9 +110,7 @@
     "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
     "rationale": "now = deadline - 1 reverts and changes nothing when the guard is >=.",
     "origin": "logos_spec",
-    "implementation_status": "blocked",
-    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
-    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "implementation_status": "passes",
     "phases": [
       "evm"
     ],
@@ -132,13 +123,6 @@
         "outcome": "revert",
         "storage_unchanged": true,
         "balance_unchanged": true
-      }
-    },
-    "observed": {
-      "evm": {
-        "status": "error",
-        "exception": "RuntimeError",
-        "message": "Unknown opcode: :SHR"
       }
     },
     "note": "now = deadline - 1 reverts and changes nothing when the guard is >=."
@@ -159,9 +143,7 @@
     "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
     "rationale": "now = deadline succeeds when the rule is >=. KF-EVM-CMP-ORDER currently inverts this.",
     "origin": "logos_spec",
-    "implementation_status": "blocked",
-    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
-    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "implementation_status": "passes",
     "phases": [
       "evm"
     ],
@@ -173,13 +155,6 @@
       "execute": {
         "outcome": "success",
         "storage_unchanged": false
-      }
-    },
-    "observed": {
-      "evm": {
-        "status": "error",
-        "exception": "RuntimeError",
-        "message": "Unknown opcode: :SHR"
       }
     },
     "note": "now = deadline succeeds when the rule is >=. KF-EVM-CMP-ORDER currently inverts this."
@@ -200,9 +175,7 @@
     "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
     "rationale": "A second release does not transfer again.",
     "origin": "logos_spec",
-    "implementation_status": "blocked",
-    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
-    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "implementation_status": "passes",
     "phases": [
       "evm"
     ],
@@ -215,13 +188,6 @@
         "outcome": "revert",
         "second_call": "revert",
         "duplicate_transfer": false
-      }
-    },
-    "observed": {
-      "evm": {
-        "status": "error",
-        "exception": "RuntimeError",
-        "message": "Unknown opcode: :SHR"
       }
     },
     "note": "A second release does not transfer again."
@@ -242,9 +208,7 @@
     "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
     "rationale": "An unauthorized caller changes nothing. No caller check is emitted today.",
     "origin": "logos_spec",
-    "implementation_status": "blocked",
-    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
-    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "implementation_status": "passes",
     "phases": [
       "evm"
     ],
@@ -257,13 +221,6 @@
         "outcome": "revert",
         "storage_unchanged": true,
         "normative_fragment": "asm.calldata-guard"
-      }
-    },
-    "observed": {
-      "evm": {
-        "status": "error",
-        "exception": "RuntimeError",
-        "message": "Unknown opcode: :SHR"
       }
     },
     "note": "An unauthorized caller changes nothing. No caller check is emitted today."
@@ -284,9 +241,7 @@
     "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
     "rationale": "Each selector reaches its body. An unknown selector reverts. KF-EVM-DISPATCH.",
     "origin": "logos_spec",
-    "implementation_status": "blocked",
-    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
-    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "implementation_status": "passes",
     "phases": [
       "evm"
     ],
@@ -300,13 +255,6 @@
         "selector_count": "3",
         "unknown_selector": "revert",
         "normative_fragment": "asm.dispatch-dup"
-      }
-    },
-    "observed": {
-      "evm": {
-        "status": "error",
-        "exception": "RuntimeError",
-        "message": "Unknown opcode: :SHR"
       }
     },
     "note": "Each selector reaches its body. An unknown selector reverts. KF-EVM-DISPATCH."
@@ -327,9 +275,7 @@
     "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
     "rationale": "A token that returns false rolls the transaction back.",
     "origin": "logos_spec",
-    "implementation_status": "blocked",
-    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
-    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "implementation_status": "passes",
     "phases": [
       "evm"
     ],
@@ -341,13 +287,6 @@
       "execute": {
         "outcome": "revert",
         "rolled_back": true
-      }
-    },
-    "observed": {
-      "evm": {
-        "status": "error",
-        "exception": "RuntimeError",
-        "message": "Unknown opcode: :SHR"
       }
     },
     "note": "A token that returns false rolls the transaction back."
@@ -368,9 +307,7 @@
     "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
     "rationale": "A reverting token rolls state back.",
     "origin": "logos_spec",
-    "implementation_status": "blocked",
-    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
-    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "implementation_status": "passes",
     "phases": [
       "evm"
     ],
@@ -382,13 +319,6 @@
       "execute": {
         "outcome": "revert",
         "rolled_back": true
-      }
-    },
-    "observed": {
-      "evm": {
-        "status": "error",
-        "exception": "RuntimeError",
-        "message": "Unknown opcode: :SHR"
       }
     },
     "note": "A reverting token rolls state back."
@@ -409,9 +339,7 @@
     "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
     "rationale": "1, 31, 33 byte and noncanonical bool returns do not count as success.",
     "origin": "logos_spec",
-    "implementation_status": "blocked",
-    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
-    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "implementation_status": "passes",
     "phases": [
       "evm"
     ],
@@ -424,13 +352,6 @@
         "outcome": "revert",
         "silent_success": false,
         "normative_fragment": "asm.returndata-width"
-      }
-    },
-    "observed": {
-      "evm": {
-        "status": "error",
-        "exception": "RuntimeError",
-        "message": "Unknown opcode: :SHR"
       }
     },
     "note": "1, 31, 33 byte and noncanonical bool returns do not count as success."
@@ -451,9 +372,7 @@
     "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
     "rationale": "An earlier Set and Emit do not persist when a later transfer fails.",
     "origin": "logos_spec",
-    "implementation_status": "blocked",
-    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
-    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "implementation_status": "passes",
     "phases": [
       "evm"
     ],
@@ -466,13 +385,6 @@
         "outcome": "revert",
         "rolled_back": true,
         "normative_fragment": "asm.call-order"
-      }
-    },
-    "observed": {
-      "evm": {
-        "status": "error",
-        "exception": "RuntimeError",
-        "message": "Unknown opcode: :SHR"
       }
     },
     "note": "An earlier Set and Emit do not persist when a later transfer fails."
@@ -493,9 +405,7 @@
     "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
     "rationale": "Creation bytecode returns the runtime blob and that blob dispatches.",
     "origin": "logos_spec",
-    "implementation_status": "blocked",
-    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
-    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "implementation_status": "passes",
     "phases": [
       "evm"
     ],
@@ -507,13 +417,6 @@
       "execute": {
         "outcome": "success",
         "runtime_equals_deployed_code": true
-      }
-    },
-    "observed": {
-      "evm": {
-        "status": "error",
-        "exception": "RuntimeError",
-        "message": "Unknown opcode: :SHR"
       }
     },
     "note": "Creation bytecode returns the runtime blob and that blob dispatches."
@@ -534,9 +437,7 @@
     "source_ref": "baoulo/prompts/logos_regression_test_harness_prompt.md",
     "rationale": "Same contract and scenario. Gas may differ. Observable state and logs may not.",
     "origin": "logos_spec",
-    "implementation_status": "blocked",
-    "known_failure_id": "KF-EVM-UNKNOWN-SHR",
-    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "implementation_status": "passes",
     "phases": [
       "evm"
     ],
@@ -549,13 +450,6 @@
         "outcome": "success",
         "logs_match_solidity": true,
         "storage_matches_solidity": true
-      }
-    },
-    "observed": {
-      "evm": {
-        "status": "error",
-        "exception": "RuntimeError",
-        "message": "Unknown opcode: :SHR"
       }
     },
     "note": "Same contract and scenario. Gas may differ. Observable state and logs may not."
