@@ -33,9 +33,10 @@ defmodule EVMCodegenTest do
   End
   """
 
-  test "compile_to_evm raises Unknown opcode :SHR before producing bytecode" do
-    assert_raise RuntimeError, "Unknown opcode: :SHR", fn ->
-      Compiler.compile_to_evm(@dsl)
-    end
+  test "compile_to_evm returns runtime and creation bytecode" do
+    %{runtime_hex: runtime, creation_hex: creation} = Compiler.compile_to_evm(@dsl)
+    assert String.starts_with?(runtime, "0x")
+    assert String.starts_with?(creation, "0x")
+    assert runtime =~ "1c"
   end
 end

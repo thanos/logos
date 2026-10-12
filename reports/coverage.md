@@ -30,4 +30,4 @@ Credo and Sobelow are not dependencies. This run did not execute them.
 | Drop `return_hex` from the ERC-20 double runner | fail | went red |
 | Keccak padding byte `0x01` changed to SHA3 `0x06` | fail | went red |
 
-The first hole is real: comparison code is not reached while `:SHR` raises. The second hole is the same. The jump-width hole is real for a different reason: `left_pad/2` times out, the case is `KNOWN_FAILURE` via `observed`, and the expected size is not what the suite checks. A width fix that still hangs would stay `KNOWN_FAILURE`.
+`compile_to_evm/1` returns bytecode. Selectors and topics are Keccak-256, comparisons push the right-hand value first, and an unknown predicate name is a compile error. Dispatcher `DUP1`, call argument order, and the remaining parser crashes stay `KNOWN_FAILURE`.

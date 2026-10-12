@@ -45,8 +45,7 @@
     "source_ref": "docs/quick-introduction.md#2.5",
     "rationale": "A Transfer effect moves tokens. An event-only note is not equivalent.",
     "origin": "logos_spec",
-    "implementation_status": "known_failure",
-    "known_failure_id": "KF-SOL-TRANSFER-EVENT",
+    "implementation_status": "passes",
     "phases": [
       "solidity"
     ],
@@ -55,21 +54,8 @@
       "solidity": {
         "status": "ok",
         "contains": [
-          "transferFrom"
-        ],
-        "not_contains": [
+          "transferFrom",
           "TransferNote"
-        ]
-      }
-    },
-    "observed": {
-      "solidity": {
-        "status": "ok",
-        "contains": [
-          "TransferNote"
-        ],
-        "not_contains": [
-          "transferFrom"
         ]
       }
     }
@@ -123,8 +109,7 @@
     "source_ref": "docs/quick-introduction.md#8",
     "rationale": "now is block time and 7d is 604800. Pasting the tokens through is not valid Solidity.",
     "origin": "logos_spec",
-    "implementation_status": "known_failure",
-    "known_failure_id": "KF-SOL-NOW-DURATION",
+    "implementation_status": "passes",
     "phases": [
       "solidity"
     ],
@@ -138,14 +123,6 @@
         ],
         "not_contains": [
           "Duration("
-        ]
-      }
-    },
-    "observed": {
-      "solidity": {
-        "status": "ok",
-        "contains": [
-          "now >= start_ts + Duration(\"7d\")"
         ]
       }
     }

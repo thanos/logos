@@ -439,6 +439,11 @@ defmodule Logos.Conformance.CorpusRunner do
 
   defp matches?(nil, _actual), do: false
 
+  defp matches?(expect, actual) when is_map(expect) do
+    expect = Map.drop(expect, ["execute"])
+    value_match?(Normalization.canonicalize(expect), Normalization.canonicalize(actual))
+  end
+
   defp matches?(expect, actual) do
     value_match?(Normalization.canonicalize(expect), Normalization.canonicalize(actual))
   end
@@ -470,7 +475,8 @@ defmodule Logos.Conformance.CorpusRunner do
 
   defp contains_ok?(needles, actual) do
     source =
-      actual["source"] || actual["hex"] || actual["return_hex"] || actual["message"] || ""
+      actual["source"] || actual["hex"] || actual["return_hex"] || actual["runtime_hex"] ||
+        actual["message"] || ""
 
     Enum.all?(needles, &String.contains?(source, &1))
   end

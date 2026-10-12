@@ -389,11 +389,14 @@ defmodule Logos.EVM.Assembler do
     DIV: 0x04,
     LT: 0x10,
     GT: 0x11,
+    SHL: 0x1B,
+    SHR: 0x1C,
     EQ: 0x14,
     ISZERO: 0x15,
     AND: 0x16,
     OR: 0x17,
     NOT: 0x19,
+    CALLER: 0x33,
     CALLDATALOAD: 0x35,
     CALLDATASIZE: 0x36,
     CALLDATACOPY: 0x37,
@@ -408,6 +411,7 @@ defmodule Logos.EVM.Assembler do
     MSTORE: 0x52,
     SLOAD: 0x54,
     SSTORE: 0x55,
+    GAS: 0x5A,
     JUMP: 0x56,
     JUMPI: 0x57,
     JUMPDEST: 0x5B,
@@ -419,7 +423,10 @@ defmodule Logos.EVM.Assembler do
     LOG0: 0xA0,
     LOG1: 0xA1,
     LOG2: 0xA2,
+    LOG3: 0xA3,
+    LOG4: 0xA4,
     CALL: 0xF1,
+    RETURN: 0xF3,
     REVERT: 0xFD,
     INVALID: 0xFE
   }
@@ -435,39 +442,62 @@ defmodule Logos.EVM.Assembler do
   # --------------------------- pass 1: resolve labels ------------------------
 
   defp resolve_labels(instrs) do
-    {_, pos, labels, out} =
-      Enum.reduce(instrs, {0, 0, %{}, []}, fn ins, {i, pc, map, acc} ->
+    widths = %{}
+    {out, labels} = layout(instrs, widths)
+    converge(instrs, widths, out, labels, 0)
+  end
+
+  defp converge(_instrs, _widths, out, labels, 32), do: {out, labels}
+
+  defp converge(instrs, widths, out, labels, n) do
+    next =
+      instrs
+      |> Enum.with_index()
+      |> Enum.reduce(widths, fn
+        {{kind, name}, i}, acc when kind in [:jump_label, :jumpi_label] ->
+          Map.put(acc, i, jump_width(Map.fetch!(labels, name)))
+
+        _, acc ->
+          acc
+      end)
+
+    if next == widths do
+      {out, labels}
+    else
+      {out2, labels2} = layout(instrs, next)
+      converge(instrs, next, out2, labels2, n + 1)
+    end
+  end
+
+  defp layout(instrs, widths) do
+    {_, _pos, labels, out} =
+      Enum.reduce(Enum.with_index(instrs), {0, 0, %{}, []}, fn {ins, i}, {_, pc, map, acc} ->
         case ins do
           {:label, name} ->
-            # JUMPDEST consumes 1 byte
-            {i + 1, pc + 1, Map.put(map, name, pc), [{:op, :JUMPDEST} | acc]}
+            {i, pc + 1, Map.put(map, name, pc), [{:op, :JUMPDEST} | acc]}
 
           {:jump_label, name} ->
-            # placeholder: PUSH2 addr; JUMP  -> 1 + 2 + 1 bytes
-            {i + 1, pc + 3, map, [{:jump_label, name} | acc]}
+            {i, pc + Map.get(widths, i, 3), map, [{:jump_label, name} | acc]}
 
           {:jumpi_label, name} ->
-            {i + 1, pc + 3, map, [{:jumpi_label, name} | acc]}
+            {i, pc + Map.get(widths, i, 3), map, [{:jumpi_label, name} | acc]}
 
-          {:push_u, {:label, name, n}} when n in 1..32 ->
-            # placeholder PUSHn addr
-            {i + 1, pc + 1 + n, map, [{:push_u, {:label, name, n}} | acc]}
+          {:push_u, {:label, _name, n}} when n in 1..32 ->
+            {i, pc + 1 + n, map, [ins | acc]}
 
           {:op, :PUSH0} ->
-            {i + 1, pc + 1, map, [ins | acc]}
+            {i, pc + 1, map, [ins | acc]}
 
-          {:op, op} ->
-            code = opcode!(op)
-            {i + 1, pc + 1, map, [ins | acc]}
+          {:op, _op} ->
+            {i, pc + 1, map, [ins | acc]}
 
           {:push, bin} when is_binary(bin) and byte_size(bin) in 1..32 ->
-            {i + 1, pc + 1 + byte_size(bin), map, [ins | acc]}
+            {i, pc + 1 + byte_size(bin), map, [ins | acc]}
 
           {:push_u, int} when is_integer(int) and int >= 0 ->
             size = int_size(int)
-            size = if size == 0, do: 0, else: size
             pc_inc = if size == 0, do: 1, else: 1 + size
-            {i + 1, pc + pc_inc, map, [ins | acc]}
+            {i, pc + pc_inc, map, [ins | acc]}
 
           other ->
             raise "Unsupported instruction in pass1: #{inspect(other)}"
@@ -476,6 +506,10 @@ defmodule Logos.EVM.Assembler do
 
     {Enum.reverse(out), labels}
   end
+
+  defp jump_width(addr) when addr <= 255, do: 3
+  defp jump_width(addr) when addr <= 65_535, do: 4
+  defp jump_width(_addr), do: 6
 
   # ---------------------------- pass 2: encode --------------------------------
 
@@ -509,13 +543,11 @@ defmodule Logos.EVM.Assembler do
   end
 
   defp encode1({:jump_label, name}, labels) do
-    addr = Map.fetch!(labels, name)
-    <<0x61, left_pad(:binary.encode_unsigned(addr), 2)::binary, opcode!(:JUMP)>>
+    push_addr(Map.fetch!(labels, name)) <> <<opcode!(:JUMP)>>
   end
 
   defp encode1({:jumpi_label, name}, labels) do
-    addr = Map.fetch!(labels, name)
-    <<0x61, left_pad(:binary.encode_unsigned(addr), 2)::binary, opcode!(:JUMPI)>>
+    push_addr(Map.fetch!(labels, name)) <> <<opcode!(:JUMPI)>>
   end
 
   defp encode1(list, labels) when is_list(list) do
@@ -539,7 +571,15 @@ defmodule Logos.EVM.Assembler do
     byte_size(:binary.encode_unsigned(int))
   end
 
-  defp left_pad(bin, n) when is_integer(n), do: left_pad(bin, n - byte_size(bin))
-  defp left_pad(bin, k) when k <= 0, do: bin
-  defp left_pad(bin, k), do: :binary.copy(<<0>>, k) <> bin
+  defp push_addr(addr) when addr <= 255, do: <<0x60, addr>>
+  defp push_addr(addr) when addr <= 65_535, do: <<0x61, addr::16>>
+
+  defp push_addr(addr) do
+    <<0x63, addr::unsigned-big-integer-size(32)>>
+  end
+
+  defp left_pad(bin, n) when is_integer(n) do
+    missing = n - byte_size(bin)
+    if missing > 0, do: :binary.copy(<<0>>, missing) <> bin, else: bin
+  end
 end

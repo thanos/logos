@@ -421,8 +421,7 @@
     "source_ref": "docs/quick-introduction.md#2.5",
     "rationale": "All nests. The inner All is not raw text.",
     "origin": "logos_spec",
-    "implementation_status": "known_failure",
-    "known_failure_id": "KF-PARSE-NESTED-ALL",
+    "implementation_status": "passes",
     "phases": [
       "parse"
     ],
@@ -438,25 +437,6 @@
                 "args": [
                   {
                     "op": "all"
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      }
-    },
-    "observed": {
-      "parse": {
-        "status": "ok",
-        "ast": {
-          "clauses": [
-            {
-              "shall": {
-                "op": "all",
-                "args": [
-                  {
-                    "op": "emit"
                   }
                 ]
               }

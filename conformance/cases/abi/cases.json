@@ -263,9 +263,7 @@
     "source_ref": "ethereum",
     "rationale": "Release(address,uint256) in compiler output must be the Keccak selector, not SHA3-256.",
     "origin": "ethereum_standard",
-    "implementation_status": "blocked",
-    "known_failure_id": "KF-EVM-SHA3",
-    "blocked_by": "KF-EVM-UNKNOWN-SHR",
+    "implementation_status": "passes",
     "phases": [
       "evm"
     ],

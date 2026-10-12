@@ -51,14 +51,15 @@ defmodule Logos.Parser do
 
     {defs_block, s2} = extract_section_optional(s1, "Definitions")
 
-    defs =
+    {defs, def_types} =
       case defs_block do
-        nil -> %{}
+        nil -> {%{}, %{}}
         block -> parse_defs(block)
       end
 
     # --- Required sections ---
-    {state, s3} = take_section(s2, "State", &parse_state/1)
+    {state_block, s3} = extract_section(s2, "State")
+    {state, state_types} = parse_state(state_block)
     {clauses, s4} = take_section(s3, "Clauses", &parse_clauses/1)
 
     # Optional tail sections
@@ -71,6 +72,7 @@ defmodule Logos.Parser do
        parties: parties,
        defs: defs,
        state: state,
+       types: %{"defs" => def_types, "state" => state_types},
        clauses: clauses,
        term: term,
        law: law,
@@ -156,16 +158,20 @@ defmodule Logos.Parser do
   end
 
   defp parse_defs(lines) do
-    lines
-    |> Enum.map(&String.trim/1)
-    |> Enum.reject(&(&1 == ""))
-    |> Enum.map(fn l ->
-      case Regex.run(~r/^let\s+([a-zA-Z_]\w*)\s*:\s*([A-Za-z<>,\d_]+)\s*=\s*(.+)$/, l) do
-        [_, name, _type, expr] -> {name, parse_value(expr)}
-        _ -> raise("Bad Definitions line: `#{l}`")
-      end
-    end)
-    |> Map.new()
+    parsed =
+      lines
+      |> Enum.map(&String.trim/1)
+      |> Enum.reject(&(&1 == ""))
+      |> Enum.map(fn l ->
+        case Regex.run(~r/^let\s+([a-zA-Z_]\w*)\s*:\s*([A-Za-z<>,\d_]+)\s*=\s*(.+)$/, l) do
+          [_, name, type, expr] -> {name, type, parse_value(expr)}
+          _ -> raise("Bad Definitions line: `#{l}`")
+        end
+      end)
+
+    values = Map.new(parsed, fn {name, _type, value} -> {name, value} end)
+    types = Map.new(parsed, fn {name, type, _value} -> {name, type} end)
+    {values, types}
   end
 
   defp parse_state(lines) do
@@ -173,17 +179,21 @@ defmodule Logos.Parser do
 
     case Regex.run(~r/record\s*\{\s*(.+)\s*\}/, blob) do
       [_, inner] ->
-        inner
-        |> String.split(",")
-        |> Enum.map(&String.trim/1)
-        |> Enum.reject(&(&1 == ""))
-        |> Enum.map(fn f ->
-          case Regex.run(~r/^([a-zA-Z_]\w*)\s*:\s*[A-Za-z<>,\d_]+\s*=\s*(.+)$/, f) do
-            [_, name, value] -> {name, parse_value(value)}
-            _ -> raise("Bad State field: `#{f}`")
-          end
-        end)
-        |> Map.new()
+        fields =
+          inner
+          |> String.split(",")
+          |> Enum.map(&String.trim/1)
+          |> Enum.reject(&(&1 == ""))
+          |> Enum.map(fn f ->
+            case Regex.run(~r/^([a-zA-Z_]\w*)\s*:\s*([A-Za-z<>,\d_]+)\s*=\s*(.+)$/, f) do
+              [_, name, type, value] -> {name, type, parse_value(value)}
+              _ -> raise("Bad State field: `#{f}`")
+            end
+          end)
+
+        values = Map.new(fields, fn {name, _type, value} -> {name, value} end)
+        types = Map.new(fields, fn {name, type, _value} -> {name, type} end)
+        {values, types}
 
       _ ->
         raise("State must be `record { ... }`")
@@ -308,6 +318,8 @@ defmodule Logos.Parser do
     cond do
       String.starts_with?(t, "address") -> :address
       String.starts_with?(t, "bool") -> :bool
+      String.starts_with?(t, "string") -> :string
+      String.starts_with?(t, "bytes") -> :bytes
       String.starts_with?(t, "int") -> :uint256
       String.starts_with?(t, "decimal") -> :uint256
       true -> :uint256
@@ -378,6 +390,9 @@ defmodule Logos.Parser do
 
   defp parse_effect_term(text) do
     cond do
+      String.starts_with?(text, "All [") ->
+        parse_effect([text])
+
       String.starts_with?(text, "Set {") ->
         kv = parse_kv_map(text, "Set")
 
@@ -452,6 +467,9 @@ defmodule Logos.Parser do
       String.match?(v, ~r/^-?\d+$/) ->
         String.to_integer(v)
 
+      String.match?(v, ~r/^-?\d+\.\d+$/) ->
+        Logos.Data.decimal(v)
+
       String.match?(v, ~r/^0x[0-9a-fA-F]{4,}$/) ->
         v
 
@@ -459,7 +477,8 @@ defmodule Logos.Parser do
         strip_quotes(v)
 
       String.match?(v, ~r/^Some\((.+)\)$/) ->
-        {:some, v |> String.replace_prefix("Some(", "") |> strip_suffix(")")}
+        [_, inner] = Regex.run(~r/^Some\((.+)\)$/, v)
+        {:some, parse_value(inner)}
 
       v == "None" ->
         :none

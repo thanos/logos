@@ -95,7 +95,7 @@ Effect ::=
 
 ```Condition <ConditionId>(<params>) : Bool = <boolean_expr>```
 
-2.7 Grammar (EBNF - not complete)
+2.7 Grammar (EBNF)
 
 ```
 contract   := "Contract" ident nl block "End"
@@ -112,6 +112,22 @@ clause     := "Clause" ident "(" params? ")" ":" "Effect" nl
 term       := "Term" nl "until" expr nl
 law        := "GoverningLaw" string nl
 sigs       := "Signatures" nl { "require" ident "signed" nl }
+type       := "Int" | "Bool" | "Address" | "Party" | "String" | "Bytes"
+            | "Decimal" | "Option" "<" type ">" | "Duration"
+params     := param { "," param }
+param      := ident ":" type
+expr       := term { ("+" | "-") term }
+            | expr ("==" | "!=" | "<" | ">" | "<=" | ">=") expr
+            | expr ("and" | "or") expr | "not" expr | "(" expr ")"
+term       := ident | int | decimal | string | "now" | "Some" "(" expr ")" | "None"
+            | "Duration" "(" string ")"
+decimal    := int "." int
+effect_expr:= "Set" "{" "field" ":" string "," "value" ":" expr "}"
+            | "Emit" "{" "event" ":" string "," "data" ":" json "}"
+            | "Transfer" "{" "asset" ":" expr "," ["from" ":" expr ","] "to" ":" expr "," "amount" ":" expr "}"
+            | "All" "[" effect_expr { "," effect_expr } "]"
+            | "If" "{" "cond" ":" expr "," "then_" ":" effect_expr "," "else_" ":" effect_expr "}"
+json       := "{" { string ":" expr } "}"
 ```
 
 ## 3) Static semantics
