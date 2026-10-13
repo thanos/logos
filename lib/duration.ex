@@ -19,12 +19,16 @@ defmodule Logos.Duration do
   @doc "Replace duration literals with decimal seconds. Leaves `now` alone."
   def rewrite(text) when is_binary(text) do
     text
-    |> then(&Regex.replace(~r/Duration\(\s*["']([^"']+)["']\s*\)/i, &1, fn _, spec ->
-      Integer.to_string(seconds(spec))
-    end))
-    |> then(&Regex.replace(~r/\b(?:\d+\s*[smhdw]){1,}\b/i, &1, fn spec ->
-      Integer.to_string(seconds(spec))
-    end))
+    |> then(
+      &Regex.replace(~r/Duration\(\s*["']([^"']+)["']\s*\)/i, &1, fn _, spec ->
+        Integer.to_string(seconds(spec))
+      end)
+    )
+    |> then(
+      &Regex.replace(~r/\b(?:\d+\s*[smhdw]){1,}\b/i, &1, fn spec ->
+        Integer.to_string(seconds(spec))
+      end)
+    )
   end
 
   @doc "Solidity form: `now` is `block.timestamp` and durations are seconds."

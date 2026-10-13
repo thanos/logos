@@ -371,5 +371,4 @@ defmodule OpenIssuesTest do
     End
     """)
   end
-
 end

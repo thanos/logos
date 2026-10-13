@@ -204,7 +204,9 @@ defmodule Logos.Codegen.Solidity do
     from_ = Map.get(args, "from")
     to_ = Map.get(args, "to", "0x0000000000000000000000000000000000000000")
     amount = Map.get(args, "amount", 0)
-    from_expr = if from_ in [nil, "CALLER"], do: "msg.sender", else: solidity_addr_for_event(from_)
+
+    from_expr =
+      if from_ in [nil, "CALLER"], do: "msg.sender", else: solidity_addr_for_event(from_)
 
     [
       "    (bool ok, ) = ",
